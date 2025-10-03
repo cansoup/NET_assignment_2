@@ -1,0 +1,6 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/WinFormsApp1/.vs/WinFormsApp1
+/WinFormsApp1/obj
