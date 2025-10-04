@@ -1,8 +1,98 @@
 ﻿################################################################################
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
+## Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
 
-/WinFormsApp1/.vs/WinFormsApp1
-/WinFormsApp1/obj
-/.vs
-/DineConnect/.vs/DineConnect
+# Visual Studio cache/options
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build artifacts
+*.dll
+*.exe
+*.appx
+*.appxupload
+*.appxbundle
+*.msix
+*.msixupload
+*.msixbundle
+*.pdb
+
+# NuGet
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+.nuget/
+packages/
+# Don’t ignore these: 
+!**/packages/build/
+!**/packages/repositories.config
+
+# Entity Framework Core Migrations
+# (Keep .cs migration files, ignore generated model snapshots/binaries)
+*Migrations/*.Designer.cs
+*Migrations/*ModelSnapshot.cs
+
+# Test results
+TestResult*/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# Resharper / Rider
+_ReSharper*/
+*.DotSettings.user
+
+# DotCover
+*.dotCover
+
+# User-specific files
+*.swp
+*.tmp
+*.temp
+*.bak
+
+# Mac / Linux junk
+.DS_Store
+*.swp
+*.swo
+*~
+
+# JetBrains Rider / IDE
+.idea/
+*.iml
+
+# Rider plugin caches
+.gradle/
+out/
+
+# Visual Studio Code
+.vscode/
+.history/
+*.code-workspace
+
+# MAUI / Xamarin specific
+*.apk
+*.ap_
+*.aab
+*.keystore
+*.jks
+
+# Windows Installer files
+*.msi
+*.msm
+*.msp
+
+# Others
+desktop.ini
+Thumbs.db
