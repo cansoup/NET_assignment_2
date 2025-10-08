@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Hanna\\Documents\\NET_assignment_2\\DineConnect\\DineConnect.Core\\DineConnect.Core.csproj": {}
+    "C:\\Users\\김민하\\Source\\Repos\\NET_assignment_2\\DineConnect\\DineConnect.Core\\DineConnect.Core.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Hanna\\Documents\\NET_assignment_2\\DineConnect\\DineConnect.Core\\DineConnect.Core.csproj": {
+    "C:\\Users\\김민하\\Source\\Repos\\NET_assignment_2\\DineConnect\\DineConnect.Core\\DineConnect.Core.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Hanna\\Documents\\NET_assignment_2\\DineConnect\\DineConnect.Core\\DineConnect.Core.csproj",
+        "projectUniqueName": "C:\\Users\\김민하\\Source\\Repos\\NET_assignment_2\\DineConnect\\DineConnect.Core\\DineConnect.Core.csproj",
         "projectName": "DineConnect.Core",
-        "projectPath": "C:\\Users\\Hanna\\Documents\\NET_assignment_2\\DineConnect\\DineConnect.Core\\DineConnect.Core.csproj",
-        "packagesPath": "C:\\Users\\Hanna\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Hanna\\Documents\\NET_assignment_2\\DineConnect\\DineConnect.Core\\obj\\",
+        "projectPath": "C:\\Users\\김민하\\Source\\Repos\\NET_assignment_2\\DineConnect\\DineConnect.Core\\DineConnect.Core.csproj",
+        "packagesPath": "C:\\Users\\김민하\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\김민하\\Source\\Repos\\NET_assignment_2\\DineConnect\\DineConnect.Core\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Hanna\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\김민하\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
