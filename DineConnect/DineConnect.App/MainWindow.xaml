@@ -1,12 +1,34 @@
 ﻿<Window x:Class="DineConnect.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:DineConnect.App"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="DineConnect" Height="600" Width="900"
+        Background="White">
 
+    
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <TextBlock 
+            Text="DineConnect" 
+            FontSize="48" 
+            FontWeight="Bold"
+            Foreground="#4f46e5" 
+            HorizontalAlignment="Center" 
+            VerticalAlignment="Top" Margin="0,30,0,10"/>
+
+        <Border Grid.Row="1" BorderBrush="#e5e7ab" BorderThickness="0,0,0,1" Margin="0,10,0,20">
+            <StackPanel
+                Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="My Favorites" Style="{StaticResource NavButtonStyle}"/>
+                <Button Content="Community Picks" Style="{StaticResource NavButtonStyle}"/>
+                <Button Content="Reservations" Style="{StaticResource NavButtonStyle}"/>
+                <Button Content="Map View" Style="{StaticResource NavButtonStyle}"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>
