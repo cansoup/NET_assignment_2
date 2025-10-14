@@ -2402,7 +2402,6 @@
     "net8.0-windows7.0": [
       "DineConnect.Core >= 1.0.0",
       "DineConnect.Services >= 1.0.0",
-      "Microsoft.Extensions.DependencyInjection >= 9.0.9",
       "Microsoft.Extensions.Hosting >= 9.0.9"
     ]
   },
@@ -2464,10 +2463,6 @@
       "net8.0-windows7.0": {
         "targetAlias": "net8.0-windows",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection": {
-            "target": "Package",
-            "version": "[9.0.9, )"
-          },
           "Microsoft.Extensions.Hosting": {
             "target": "Package",
             "version": "[9.0.9, )"
