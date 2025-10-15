@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DineConnect.App")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f42f75019caabd679e2243dfe62008709cf63790")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e4b043c34867da00567ba205893e0122d66ad754")]
 [assembly: System.Reflection.AssemblyProductAttribute("DineConnect.App")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DineConnect.App")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

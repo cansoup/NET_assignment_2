@@ -4,8 +4,6 @@
         Title="DineConnect" Height="600" Width="900"
         Background="White">
 
-    
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -30,5 +28,7 @@
                 <Button Content="Map View" Style="{StaticResource NavButtonStyle}"/>
             </StackPanel>
         </Border>
+
+        <Frame Grid.Row="2" x:Name="MainFrame" NavigationUIVisibility="Hidden" Margin="20"/>
     </Grid>
 </Window>
