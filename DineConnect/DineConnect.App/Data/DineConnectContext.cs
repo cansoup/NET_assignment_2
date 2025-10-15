@@ -3,6 +3,11 @@ using Microsoft.EntityFrameworkCore;
 
 public class DineConnectContext : DbContext
 {
+    public DineConnectContext() { }
+
+    // Added so tests can inject a fake SQL database (like in-memory SQLite)
+    public DineConnectContext(DbContextOptions<DineConnectContext> options) : base(options) { }
+
     public DbSet<Restaurant> Restaurants => Set<Restaurant>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Post> Posts => Set<Post>();
@@ -11,11 +16,12 @@ public class DineConnectContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)
     {
-        // SQLite:
-        options.UseSqlite("Data Source=dineconnect.db");
-
-        // OR for SQL Server (comment SQLite, uncomment below):
-        // options.UseSqlServer(@"Server=(localdb)\MSSQLLocalDB;Database=DineConnect;Trusted_Connection=True;");
+        // Only apply default connection if no options were passed (so tests can override!)
+        if (!options.IsConfigured)
+        {
+            // SQLite:
+            options.UseSqlite("Data Source=dineconnect.db");
+        }
     }
 
     protected override void OnModelCreating(ModelBuilder model)
