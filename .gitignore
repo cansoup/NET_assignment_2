@@ -96,3 +96,6 @@ out/
 # Others
 desktop.ini
 Thumbs.db
+/DineConnect/DineConnect.App/obj/*
+**/obj/
+**/bin/

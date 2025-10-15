@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DineConnect.Core.Models
+namespace DineConnect.App.Models
 {
     public class Comment
     {
