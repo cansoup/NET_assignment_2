@@ -28,9 +28,12 @@ namespace DineConnect.App
                 case "MyFavoritesButton":
                     MainFrame.Navigate(new MyFavoritesView());
                     break;
-                //case "CommunityPicksButton":
-                //    MainFrame.Navigate(new CommunityPicksView());
-                //    break;
+                case "ReservationsButton":
+                    MainFrame.Navigate(new ReservationsView());
+                    break;
+                    //case "CommunityPicksButton":
+                    //    MainFrame.Navigate(new CommunityPicksView());
+                    //    break;
             }
         }
     }
