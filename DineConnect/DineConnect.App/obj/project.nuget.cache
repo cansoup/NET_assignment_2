@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "Eeg8cTGJHzM=",
+  "dgSpecHash": "WW1NoVvWpDE=",
   "success": true,
   "projectFilePath": "C:\\Users\\김민하\\Source\\Repos\\NET_assignment_2\\DineConnect\\DineConnect.App\\DineConnect.App.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\김민하\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\김민하\\.nuget\\packages\\microsoft.data.sqlite.core\\9.0.9\\microsoft.data.sqlite.core.9.0.9.nupkg.sha512",
     "C:\\Users\\김민하\\.nuget\\packages\\microsoft.entityframeworkcore\\9.0.9\\microsoft.entityframeworkcore.9.0.9.nupkg.sha512",
     "C:\\Users\\김민하\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\9.0.9\\microsoft.entityframeworkcore.abstractions.9.0.9.nupkg.sha512",
