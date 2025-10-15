@@ -1217,21 +1217,10 @@
           }
         }
       },
-      "DineConnect.Core/1.0.0": {
-        "type": "project",
-        "framework": ".NETCoreApp,Version=v8.0",
-        "compile": {
-          "bin/placeholder/DineConnect.Core.dll": {}
-        },
-        "runtime": {
-          "bin/placeholder/DineConnect.Core.dll": {}
-        }
-      },
       "DineConnect.Data/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v8.0",
         "dependencies": {
-          "DineConnect.Core": "1.0.0",
           "Microsoft.EntityFrameworkCore": "9.0.10",
           "Microsoft.EntityFrameworkCore.SqlServer": "9.0.10",
           "Microsoft.EntityFrameworkCore.Sqlite": "9.0.9"
@@ -3196,11 +3185,6 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "DineConnect.Core/1.0.0": {
-      "type": "project",
-      "path": "../DineConnect.Core/DineConnect.Core.csproj",
-      "msbuildProject": "../DineConnect.Core/DineConnect.Core.csproj"
-    },
     "DineConnect.Data/1.0.0": {
       "type": "project",
       "path": "../DineConnect.Data/DineConnect.Data.csproj",
@@ -3209,7 +3193,6 @@
   },
   "projectFileDependencyGroups": {
     "net8.0": [
-      "DineConnect.Core >= 1.0.0",
       "DineConnect.Data >= 1.0.0",
       "Microsoft.Extensions.DependencyInjection.Abstractions >= 9.0.9"
     ]
@@ -3247,9 +3230,6 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\Hanna\\Documents\\NET_assignment_2\\DineConnect\\DineConnect.Core\\DineConnect.Core.csproj": {
-              "projectPath": "C:\\Users\\Hanna\\Documents\\NET_assignment_2\\DineConnect\\DineConnect.Core\\DineConnect.Core.csproj"
-            },
             "C:\\Users\\Hanna\\Documents\\NET_assignment_2\\DineConnect\\DineConnect.Data\\DineConnect.Data.csproj": {
               "projectPath": "C:\\Users\\Hanna\\Documents\\NET_assignment_2\\DineConnect\\DineConnect.Data\\DineConnect.Data.csproj"
             }
