@@ -7,10 +7,14 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <!-- Title -->
             <RowDefinition Height="Auto"/>
+            <!-- Navigation Bar -->
             <RowDefinition Height="*"/>
+            <!-- Frame Content -->
         </Grid.RowDefinitions>
-        
+
+        <!-- App Title -->
         <TextBlock 
             Text="DineConnect" 
             FontSize="48" 
@@ -19,16 +23,17 @@
             HorizontalAlignment="Center" 
             VerticalAlignment="Top" Margin="0,30,0,10"/>
 
-        <Border Grid.Row="1" BorderBrush="#e5e7ab" BorderThickness="0,0,0,1" Margin="0,10,0,20">
-            <StackPanel
-                Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Content="My Favorites" Style="{StaticResource NavButtonStyle}"/>
-                <Button Content="Community Picks" Style="{StaticResource NavButtonStyle}"/>
-                <Button Content="Reservations" Style="{StaticResource NavButtonStyle}"/>
-                <Button Content="Map View" Style="{StaticResource NavButtonStyle}"/>
+        <!-- Navigation Bar -->
+        <Border Grid.Row="1" BorderBrush="#e5e7eb" BorderThickness="0,0,0,1" Margin="0,10,0,20">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Name="MyFavoritesButton" Content="My Favorites" Click="NavButton_Click" Style="{StaticResource NavButtonStyle}" Margin="5,0"/>
+                <Button Name="CommunityPicksButton" Content="Community Picks" Click="NavButton_Click" Style="{StaticResource NavButtonStyle}" Margin="5,0"/>
+                <Button Name="ReservationsButton" Content="Reservations" Click="NavButton_Click" Style="{StaticResource NavButtonStyle}" Margin="5,0"/>
+                <Button Name="MapViewButton" Content="Map View" Click="NavButton_Click" Style="{StaticResource NavButtonStyle}" Margin="5,0"/>
             </StackPanel>
         </Border>
 
+        <!-- Main Content Frame -->
         <Frame Grid.Row="2" x:Name="MainFrame" NavigationUIVisibility="Hidden" Margin="20"/>
     </Grid>
 </Window>
