@@ -53,14 +53,14 @@ namespace DineConnect.App
                     new Models.Post
                     {
                         Id = 30000001,
-                        UsertId = 10000001, // alice
+                        UserId = 10000001, // alice
                         Title = "Amazing Seafood!",
                         Content = "Had a great time at Ocean View Grill!"
                     },
                     new Models.Post
                     {
                         Id = 30000002,
-                        UsertId = 10000002, // bob
+                        UserId = 10000002, // bob
                         Title = "Love this place",
                         Content = "Mountain Top Diner has the coziest vibe!"
                     }
@@ -75,14 +75,14 @@ namespace DineConnect.App
                     new Models.Comment
                     {
                         Id = 40000001,
-                        UsertId = 10000002, // bob comments on alice’s post
+                        UserId = 10000002, // bob comments on alice’s post
                         PostId = 30000001,
                         Content = "Totally agree! Their shrimp is the best."
                     },
                     new Models.Comment
                     {
                         Id = 40000002,
-                        UsertId = 10000001, // alice comments back
+                        UserId = 10000001, // alice comments back
                         PostId = 30000002,
                         Content = "Thanks! I need to try that diner too."
                     }
@@ -135,13 +135,13 @@ namespace DineConnect.App
             var postCount = db.Posts.Count();
             System.Diagnostics.Debug.WriteLine($"Posts ({postCount}):");
             db.Posts.ToList().ForEach(p =>
-                System.Diagnostics.Debug.WriteLine($" -> [Post] {p.Id} | {p.Title} | From User {p.UsertId}")
+                System.Diagnostics.Debug.WriteLine($" -> [Post] {p.Id} | {p.Title} | From User {p.UserId}")
             );
 
             var commentCount = db.Comments.Count();
             System.Diagnostics.Debug.WriteLine($"Comments ({commentCount}):");
             db.Comments.ToList().ForEach(c =>
-                System.Diagnostics.Debug.WriteLine($" -> [Comment] {c.Id} | On Post {c.PostId} | By User {c.UsertId}")
+                System.Diagnostics.Debug.WriteLine($" -> [Comment] {c.Id} | On Post {c.PostId} | By User {c.UserId}")
             );
 
             var reservationCount = db.Reservations.Count();
