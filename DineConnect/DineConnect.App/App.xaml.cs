@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using DineConnect.App.Views.Auth;
+using System.Linq;
 using System.Windows;
 
 namespace DineConnect.App
@@ -115,6 +116,10 @@ namespace DineConnect.App
                 );
                 db.SaveChanges();
             }
+
+            var loginWindow = new LoginWindow();
+            Current.MainWindow = loginWindow;
+            loginWindow.Show();
 
             // Uncomment below to see if data was added:
             /*
