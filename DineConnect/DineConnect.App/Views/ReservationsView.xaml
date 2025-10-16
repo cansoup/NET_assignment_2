@@ -7,17 +7,10 @@
              d:DesignHeight="450" d:DesignWidth="800"
              Background="White">
 
-    <!-- 
-        Responsive principles:
-        - Two-column Grid with star sizing; left column has MinWidth to prevent squish.
-        - ScrollViewer on the form to avoid clipping on small windows.
-        - Controls stretch horizontally; DataGrid fills available space and resizes columns.
-    -->
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="360" MinWidth="300"/>
             <ColumnDefinition Width="12"/>
-            <!-- gutter -->
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
@@ -66,6 +59,7 @@
                               HorizontalAlignment="Stretch"
                               MinHeight="34"
                               Padding="6"
+                              ItemStringFormat="{}{0:h:mm tt}"
                               Margin="0,0,0,12"/>
 
                     <!-- Party size -->
@@ -134,7 +128,6 @@
                         <TextBlock Text="Status:"
                                    VerticalAlignment="Center"
                                    Margin="16,0,6,0"/>
-                        <!-- Note: no IsSelected in XAML; we set SelectedIndex in code-behind to avoid early SelectionChanged -->
                         <ComboBox x:Name="StatusFilterCombo"
                                   Width="140"
                                   SelectionChanged="StatusFilterCombo_SelectionChanged">
@@ -162,9 +155,7 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="80" />
                         <DataGridTextColumn Header="Restaurant" Binding="{Binding RestaurantName}" Width="2*" />
-                        <!-- The StringFormat below is properly escaped to avoid XLS0413 -->
-                        <DataGridTextColumn Header="When"
-                                            Width="2*">
+                        <DataGridTextColumn Header="When" Width="2*">
                             <DataGridTextColumn.Binding>
                                 <Binding Path="At" StringFormat='{}{0:dddd, MMM d, yyyy h:mm tt}' />
                             </DataGridTextColumn.Binding>

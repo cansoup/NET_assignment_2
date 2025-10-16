@@ -1,59 +1,75 @@
-﻿using System;
+﻿using DineConnect.App.Data;
+using DineConnect.App.Models;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using DineConnect.App.Models;
 
 namespace DineConnect.App.Views
 {
     public partial class ReservationsView : UserControl
     {
+        // EF context
+        private readonly DineConnectContext _db;
+
+        // UI state
         private readonly ObservableCollection<ReservationRow> _reservations = new();
-        private readonly List<RestaurantItem> _restaurants = new()
-        {
-            new RestaurantItem { Id = 1, Name = "Saffron Garden" },
-            new RestaurantItem { Id = 2, Name = "Harbour & Vine" },
-            new RestaurantItem { Id = 3, Name = "Trattoria Lucca" },
-            new RestaurantItem { Id = 4, Name = "Katsu & Co." },
-        };
+        private List<RestaurantItem> _restaurants = new();
+        private bool _isLoaded;
 
-        private int _nextReservationId = 1;
-        private readonly int _currentUserId = 42;
-        private bool _isLoaded; // prevents early event firing from touching nulls
+        // Replace with your signed-in user id retrieval
+        private readonly int _currentUserId = 10000001; // e.g., "alice" from your seed
 
+        // ---- Choose ONE of the constructors below ---------------------------
+        // A) Simple: create context directly (works if OnConfiguring is set in your DbContext)
         public ReservationsView()
         {
             InitializeComponent();
-
-            // Wire minimal, safe listeners (anything that might query other controls waits until Loaded)
+            _db = new DineConnectContext();           // <-- requires parameterless + OnConfiguring in your context
             Loaded += ReservationsView_Loaded;
+            Unloaded += ReservationsView_Unloaded;
         }
 
-        private void ReservationsView_Loaded(object? sender, RoutedEventArgs e)
+        // B) Optional DI-friendly constructor
+        // public ReservationsView(DineConnectContext db)
+        // {
+        //     InitializeComponent();
+        //     _db = db ?? throw new ArgumentNullException(nameof(db));
+        //     Loaded += ReservationsView_Loaded;
+        //     Unloaded += ReservationsView_Unloaded;
+        // }
+        // ---------------------------------------------------------------------
+
+        private async void ReservationsView_Loaded(object sender, RoutedEventArgs e)
         {
             try
             {
-                // 1) Bind data sources first
-                RestaurantCombo.ItemsSource = _restaurants;
+                // Seed & ensure DB is there
+                await DbSeed.EnsureCreatedAndSeedAsync(_db);
+
+                // 1) Bind UI collections
                 ReservationsGrid.ItemsSource = _reservations;
 
-                // 2) Initialize date/time
+                // 2) Initialize date/time + party
                 DatePicker.DisplayDateStart = DateTime.Today;
                 DatePicker.SelectedDate = DateTime.Today;
                 PopulateTimeSlots(DateTime.Today);
-
-                // 3) Initialize party size
                 PartySlider.Value = 2;
                 PartyText.Text = "2";
 
-                // 4) Now it’s safe to attach reactive handlers
+                // 3) Load EF data
+                await LoadRestaurantsAsync();
+                await LoadReservationsAsync();
+
+                // 4) Wire handlers AFTER data is in place
                 DatePicker.SelectedDateChanged += (_, __) =>
                 {
                     if (!_isLoaded) return;
-                    var date = DatePicker.SelectedDate ?? DateTime.Today;
-                    PopulateTimeSlots(date);
+                    PopulateTimeSlots(DatePicker.SelectedDate ?? DateTime.Today);
                     ValidateForm();
                 };
                 PartySlider.ValueChanged += (_, __) => { if (_isLoaded) ValidateForm(); };
@@ -61,7 +77,7 @@ namespace DineConnect.App.Views
                 RestaurantCombo.SelectionChanged += (_, __) => { if (_isLoaded) ValidateForm(); };
                 TimeCombo.SelectionChanged += (_, __) => { if (_isLoaded) ValidateForm(); };
 
-                // 5) Status filter default (do this AFTER ItemsSource is set to avoid nulls)
+                // 5) Default filter
                 StatusFilterCombo.SelectedIndex = 0;
 
                 _isLoaded = true;
@@ -69,29 +85,62 @@ namespace DineConnect.App.Views
             }
             catch (Exception ex)
             {
-                // Helpful diagnostic in case something else bubbles up
                 StatusText.Text = $"Initialization error: {ex.Message}";
             }
         }
 
+        private async Task LoadRestaurantsAsync()
+        {
+            var list = await _db.Restaurants
+                                .AsNoTracking()
+                                .OrderBy(r => r.Name)
+                                .Select(r => new RestaurantItem { Id = r.Id, Name = r.Name })
+                                .ToListAsync();
+
+            _restaurants = list;
+            RestaurantCombo.ItemsSource = _restaurants;
+        }
+
+        private async Task LoadReservationsAsync()
+        {
+            _reservations.Clear();
+
+            var reservations = await _db.Reservations
+                                        .AsNoTracking()
+                                        .OrderBy(r => r.At)
+                                        .ToListAsync();
+
+            var restNames = _restaurants.ToDictionary(r => r.Id, r => r.Name);
+
+            foreach (var r in reservations)
+            {
+                var name = restNames.TryGetValue(r.RestaurantId, out var n) ? n : $"#{r.RestaurantId}";
+                _reservations.Add(new ReservationRow(r, name));
+            }
+        }
+
+        private void ReservationsView_Unloaded(object sender, RoutedEventArgs e)
+        {
+            _db?.Dispose();
+        }
+
         private void PopulateTimeSlots(DateTime date)
         {
-            var open = new TimeSpan(11, 0, 0);
-            var close = new TimeSpan(22, 0, 0);
+            var open = new TimeSpan(11, 0, 0);  // 11 AM
+            var close = new TimeSpan(22, 0, 0); // 10 PM
             var step = TimeSpan.FromMinutes(30);
 
-            var items = new List<TimeSlot>();
+            var times = new List<DateTime>();
             for (var t = open; t <= close; t += step)
             {
-                var at = date.Date + t;
+                var at = date.Date.Add(t);
                 if (date.Date == DateTime.Today && at <= DateTime.Now) continue;
-                items.Add(new TimeSlot { At = at, Label = at.ToString("h:mm tt") });
+                times.Add(at);
             }
 
-            TimeCombo.ItemsSource = items;
-            TimeCombo.DisplayMemberPath = nameof(TimeSlot.Label);
-            TimeCombo.SelectedValuePath = nameof(TimeSlot.At);
-            TimeCombo.SelectedIndex = items.Count > 0 ? 0 : -1;
+            // Items are DateTime; XAML ItemStringFormat shows "h:mm tt"
+            TimeCombo.ItemsSource = times;
+            TimeCombo.SelectedIndex = times.Count > 0 ? 0 : -1;
         }
 
         private void ValidateForm()
@@ -100,8 +149,9 @@ namespace DineConnect.App.Views
 
             bool hasRestaurant = RestaurantCombo?.SelectedItem is RestaurantItem;
             bool hasDate = DatePicker?.SelectedDate is DateTime;
-            bool hasTime = TimeCombo?.SelectedItem is TimeSlot;
-            bool partyOk = int.TryParse(PartyText?.Text, out int p) && p >= 1 && p <= 20;
+            bool hasTime = TimeCombo?.SelectedItem is DateTime;
+            int maxParty = (int)PartySlider.Maximum;
+            bool partyOk = int.TryParse(PartyText?.Text, out int p) && p >= 1 && p <= maxParty;
 
             BookButton.IsEnabled = hasRestaurant && hasDate && hasTime && partyOk;
 
@@ -109,16 +159,16 @@ namespace DineConnect.App.Views
                 !hasRestaurant ? "Select a restaurant to continue." :
                 !hasDate ? "Choose a date for your reservation." :
                 !hasTime ? "Pick an available time." :
-                !partyOk ? "Enter a party size between 1 and 20." :
+                !partyOk ? $"Enter a party size between 1 and {maxParty}." :
                 "";
         }
 
-        private void BookButton_Click(object sender, RoutedEventArgs e)
+        private async void BookButton_Click(object sender, RoutedEventArgs e)
         {
             if (!_isLoaded || !BookButton.IsEnabled) return;
 
             if (RestaurantCombo.SelectedItem is not RestaurantItem restaurant ||
-                TimeCombo.SelectedItem is not TimeSlot timeSlot)
+                TimeCombo.SelectedItem is not DateTime at)
             {
                 ValidateForm();
                 return;
@@ -126,28 +176,42 @@ namespace DineConnect.App.Views
 
             int party = int.TryParse(PartyText.Text, out var p) ? p : (int)PartySlider.Value;
 
-            var reservation = new Reservation
+            var entity = new Reservation
             {
-                Id = _nextReservationId++,
                 RestaurantId = restaurant.Id,
                 UserId = _currentUserId,
-                At = timeSlot.At,
+                At = at,
                 PartySize = party,
                 Status = ReservationStatus.Confirmed
             };
 
-            _reservations.Add(new ReservationRow(reservation, restaurant.Name));
+            try
+            {
+                await _db.Reservations.AddAsync(entity);
+                await _db.SaveChangesAsync();
 
-            // Reset some fields for convenience
-            DatePicker.SelectedDate = DateTime.Today;
-            PopulateTimeSlots(DateTime.Today);
-            PartySlider.Value = 2;
-            PartyText.Text = "2";
+                var name = restaurant.Name;
+                _reservations.Add(new ReservationRow(entity, name));
 
-            StatusText.Text = $"✅ Reserved {restaurant.Name} for {party} on {reservation.At:ddd, MMM d h:mm tt}.";
+                // Reset inputs
+                DatePicker.SelectedDate = DateTime.Today;
+                PopulateTimeSlots(DateTime.Today);
+                PartySlider.Value = 2;
+                PartyText.Text = "2";
+
+                StatusText.Text = $"✅ Reserved {name} for {party} on {entity.At:ddd, MMM d h:mm tt}.";
+            }
+            catch (DbUpdateException ex)
+            {
+                StatusText.Text = $"Could not save reservation: {ex.GetBaseException().Message}";
+            }
+            catch (Exception ex)
+            {
+                StatusText.Text = $"Unexpected error: {ex.Message}";
+            }
         }
 
-        private void StatusFilterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void StatusFilterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_isLoaded) return;
 
@@ -155,32 +219,44 @@ namespace DineConnect.App.Views
                 (StatusFilterCombo.SelectedItem as ComboBoxItem)?.Content?.ToString()
                 ?? "All";
 
-            if (selectedText.Equals("All", StringComparison.OrdinalIgnoreCase))
+            try
             {
-                ReservationsGrid.ItemsSource = _reservations;
-                return;
-            }
+                if (selectedText.Equals("All", StringComparison.OrdinalIgnoreCase))
+                {
+                    await LoadReservationsAsync();
+                    return;
+                }
 
-            if (Enum.TryParse<ReservationStatus>(selectedText, ignoreCase: true, out var status))
+                if (Enum.TryParse<ReservationStatus>(selectedText, true, out var status))
+                {
+                    _reservations.Clear();
+
+                    var filtered = await _db.Reservations
+                                            .AsNoTracking()
+                                            .Where(r => r.Status == status)
+                                            .OrderBy(r => r.At)
+                                            .ToListAsync();
+
+                    var restNames = _restaurants.ToDictionary(r => r.Id, r => r.Name);
+                    foreach (var r in filtered)
+                    {
+                        var name = restNames.TryGetValue(r.RestaurantId, out var n) ? n : $"#{r.RestaurantId}";
+                        _reservations.Add(new ReservationRow(r, name));
+                    }
+                }
+            }
+            catch (Exception ex)
             {
-                // Project a filtered view; keep the original backing collection intact
-                ReservationsGrid.ItemsSource = new ObservableCollection<ReservationRow>(
-                    _reservations.Where(r => r.Status == status));
+                StatusText.Text = $"Filter error: {ex.Message}";
             }
         }
 
-        // Helper types
+        // Helper models for binding
         private sealed class RestaurantItem
         {
             public int Id { get; set; }
             public string Name { get; set; } = "";
-        }
-
-        private sealed class TimeSlot
-        {
-            public DateTime At { get; set; }
-            public string Label { get; set; } = "";
-            public override string ToString() => Label;
+            public override string ToString() => Name;
         }
 
         private sealed class ReservationRow
