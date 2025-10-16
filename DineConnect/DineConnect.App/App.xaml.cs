@@ -1,3 +1,4 @@
+﻿using DineConnect.App.Views.Auth;
 ﻿using DineConnect.App.Data;
 using System.Linq;
 using System.Windows;
@@ -10,6 +11,10 @@ namespace DineConnect.App
         {
             using var db = new DineConnectContext();
             await DbSeed.EnsureCreatedAndSeedAsync(db);
+
+            var loginWindow = new LoginWindow();
+            Current.MainWindow = loginWindow;
+            loginWindow.Show();
         }
 
         // Uncomment below to see if data was added:
