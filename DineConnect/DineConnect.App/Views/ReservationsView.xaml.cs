@@ -21,28 +21,16 @@ namespace DineConnect.App.Views
         private List<RestaurantItem> _restaurants = new();
         private bool _isLoaded;
 
-        // Replace with your signed-in user id retrieval
-        private readonly int _currentUserId = 10000001; // e.g., "alice" from your seed
+        // TODO: Replace with signed-in user id
+        private readonly int _currentUserId = 10000001;
 
-        // ---- Choose ONE of the constructors below ---------------------------
-        // A) Simple: create context directly (works if OnConfiguring is set in your DbContext)
         public ReservationsView()
         {
             InitializeComponent();
-            _db = new DineConnectContext();           // <-- requires parameterless + OnConfiguring in your context
+            _db = new DineConnectContext();         
             Loaded += ReservationsView_Loaded;
             Unloaded += ReservationsView_Unloaded;
         }
-
-        // B) Optional DI-friendly constructor
-        // public ReservationsView(DineConnectContext db)
-        // {
-        //     InitializeComponent();
-        //     _db = db ?? throw new ArgumentNullException(nameof(db));
-        //     Loaded += ReservationsView_Loaded;
-        //     Unloaded += ReservationsView_Unloaded;
-        // }
-        // ---------------------------------------------------------------------
 
         private async void ReservationsView_Loaded(object sender, RoutedEventArgs e)
         {
@@ -248,6 +236,52 @@ namespace DineConnect.App.Views
             catch (Exception ex)
             {
                 StatusText.Text = $"Filter error: {ex.Message}";
+            }
+        }
+
+        // Delete button handler
+        private async void DeleteReservation_Click(object sender, RoutedEventArgs e)
+        {
+            if ((sender as Button)?.DataContext is not ReservationRow row)
+            {
+                StatusText.Text = "Could not determine which reservation to delete.";
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                $"Delete reservation #{row.Id} at \"{row.RestaurantName}\" on {row.At:ddd, MMM d h:mm tt}?",
+                "Confirm Delete",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (confirm != MessageBoxResult.Yes) return;
+
+            try
+            {
+                // Load tracked entity (rows were loaded AsNoTracking)
+                var entity = await _db.Reservations.FindAsync(row.Id);
+                if (entity is null)
+                {
+                    StatusText.Text = $"Reservation #{row.Id} no longer exists.";
+                    // Remove from UI to keep things consistent
+                    _reservations.Remove(row);
+                    return;
+                }
+
+                _db.Reservations.Remove(entity);
+                await _db.SaveChangesAsync();
+
+                _reservations.Remove(row);
+
+                StatusText.Text = $"🗑️ Deleted reservation #{row.Id} for \"{row.RestaurantName}\".";
+            }
+            catch (DbUpdateException ex)
+            {
+                StatusText.Text = $"Could not delete reservation: {ex.GetBaseException().Message}";
+            }
+            catch (Exception ex)
+            {
+                StatusText.Text = $"Unexpected error while deleting: {ex.Message}";
             }
         }
 
