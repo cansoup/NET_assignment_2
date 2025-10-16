@@ -13,6 +13,11 @@ namespace DineConnect.App
         {
             InitializeComponent();
 
+            var screen = SystemParameters.WorkArea;
+            Width = screen.Width * 0.8;
+            Height = screen.Height * 0.8;
+            WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
             // Set the starting page to be MyFavoritesView
             MainFrame.Content = new MyFavoritesView();
         }

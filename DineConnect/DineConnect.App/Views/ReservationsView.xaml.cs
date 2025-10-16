@@ -1,249 +1,284 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Globalization;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Input;
+﻿using DineConnect.App.Data;
 using DineConnect.App.Models;
-using DineConnect.App.Data; // ✅ DbContext namespace
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
 
 namespace DineConnect.App.Views
 {
     public partial class ReservationsView : UserControl
     {
+        // EF context
+        private readonly DineConnectContext _db;
+
+        // UI state
+        private readonly ObservableCollection<ReservationRow> _reservations = new();
+        private List<RestaurantItem> _restaurants = new();
+        private bool _isLoaded;
+
+        // Replace with your signed-in user id retrieval
+        private readonly int _currentUserId = 10000001; // e.g., "alice" from your seed
+
+        // ---- Choose ONE of the constructors below ---------------------------
+        // A) Simple: create context directly (works if OnConfiguring is set in your DbContext)
         public ReservationsView()
         {
             InitializeComponent();
-            DataContext = new ReservationsViewModel();
+            _db = new DineConnectContext();           // <-- requires parameterless + OnConfiguring in your context
+            Loaded += ReservationsView_Loaded;
+            Unloaded += ReservationsView_Unloaded;
         }
 
-        // ==================== VIEWMODEL ====================
-        private class ReservationsViewModel : INotifyPropertyChanged
+        // B) Optional DI-friendly constructor
+        // public ReservationsView(DineConnectContext db)
+        // {
+        //     InitializeComponent();
+        //     _db = db ?? throw new ArgumentNullException(nameof(db));
+        //     Loaded += ReservationsView_Loaded;
+        //     Unloaded += ReservationsView_Unloaded;
+        // }
+        // ---------------------------------------------------------------------
+
+        private async void ReservationsView_Loaded(object sender, RoutedEventArgs e)
         {
-            private readonly int _currentUserId = 10000001; // ✅ Fixed user as requested
-
-            // ===== Collections =====
-            public ObservableCollection<Restaurant> Restaurants { get; } = new();
-            public ICollectionView FilteredRestaurants { get; }
-            public ObservableCollection<Reservation> Reservations { get; } = new();
-            public ObservableCollection<Reservation> ReservationsForSelected { get; } = new();
-
-            public ReservationsViewModel()
+            try
             {
-                LoadDataFromDatabase(); // ✅ Initial EF Load
+                // Seed & ensure DB is there
+                await DbSeed.EnsureCreatedAndSeedAsync(_db);
 
-                // Setup filter
-                FilteredRestaurants = CollectionViewSource.GetDefaultView(Restaurants);
-                FilteredRestaurants.Filter = FilterRestaurants;
+                // 1) Bind UI collections
+                ReservationsGrid.ItemsSource = _reservations;
 
-                // Build time slots (17:00 to 22:00 every 30min)
-                var start = DateTime.Today.AddHours(17);
-                var end = DateTime.Today.AddHours(22);
-                for (var t = start; t <= end; t = t.AddMinutes(30))
-                    TimeSlots.Add(t.ToString("HH:mm"));
+                // 2) Initialize date/time + party
+                DatePicker.DisplayDateStart = DateTime.Today;
+                DatePicker.SelectedDate = DateTime.Today;
+                PopulateTimeSlots(DateTime.Today);
+                PartySlider.Value = 2;
+                PartyText.Text = "2";
 
-                NewReservationTime = TimeSlots.FirstOrDefault();
+                // 3) Load EF data
+                await LoadRestaurantsAsync();
+                await LoadReservationsAsync();
 
-                CreateReservationCommand = new RelayCommand(_ => CreateReservation(), _ => CanCreate);
-            }
-
-            private void LoadDataFromDatabase()
-            {
-                using var db = new DineConnectContext();
-
-                Restaurants.Clear();
-                foreach (var r in db.Restaurants.ToList())
-                    Restaurants.Add(r);
-
-                Reservations.Clear();
-                foreach (var res in db.Reservations.ToList())
-                    Reservations.Add(res);
-            }
-
-            private void RefreshReservationsForSelected()
-            {
-                ReservationsForSelected.Clear();
-                if (SelectedRestaurant == null) return;
-
-                using var db = new DineConnectContext();
-
-                var items = db.Reservations
-                    .Where(r => r.RestaurantId == SelectedRestaurant.Id)
-                    .OrderByDescending(r => r.At)
-                    .ToList();
-
-                foreach (var r in items)
-                    ReservationsForSelected.Add(r);
-            }
-
-            // ===== Selected Restaurant =====
-            private Restaurant _selectedRestaurant;
-            public Restaurant SelectedRestaurant
-            {
-                get => _selectedRestaurant;
-                set
+                // 4) Wire handlers AFTER data is in place
+                DatePicker.SelectedDateChanged += (_, __) =>
                 {
-                    if (Set(ref _selectedRestaurant, value))
-                    {
-                        RefreshReservationsForSelected();
-                        RaisePropertyChanged(nameof(CanCreate));
-                        CommandManager.InvalidateRequerySuggested();
-                    }
-                }
+                    if (!_isLoaded) return;
+                    PopulateTimeSlots(DatePicker.SelectedDate ?? DateTime.Today);
+                    ValidateForm();
+                };
+                PartySlider.ValueChanged += (_, __) => { if (_isLoaded) ValidateForm(); };
+                PartyText.TextChanged += (_, __) => { if (_isLoaded) ValidateForm(); };
+                RestaurantCombo.SelectionChanged += (_, __) => { if (_isLoaded) ValidateForm(); };
+                TimeCombo.SelectionChanged += (_, __) => { if (_isLoaded) ValidateForm(); };
+
+                // 5) Default filter
+                StatusFilterCombo.SelectedIndex = 0;
+
+                _isLoaded = true;
+                ValidateForm();
+            }
+            catch (Exception ex)
+            {
+                StatusText.Text = $"Initialization error: {ex.Message}";
+            }
+        }
+
+        private async Task LoadRestaurantsAsync()
+        {
+            var list = await _db.Restaurants
+                                .AsNoTracking()
+                                .OrderBy(r => r.Name)
+                                .Select(r => new RestaurantItem { Id = r.Id, Name = r.Name })
+                                .ToListAsync();
+
+            _restaurants = list;
+            RestaurantCombo.ItemsSource = _restaurants;
+        }
+
+        private async Task LoadReservationsAsync()
+        {
+            _reservations.Clear();
+
+            var reservations = await _db.Reservations
+                                        .AsNoTracking()
+                                        .OrderBy(r => r.At)
+                                        .ToListAsync();
+
+            var restNames = _restaurants.ToDictionary(r => r.Id, r => r.Name);
+
+            foreach (var r in reservations)
+            {
+                var name = restNames.TryGetValue(r.RestaurantId, out var n) ? n : $"#{r.RestaurantId}";
+                _reservations.Add(new ReservationRow(r, name));
+            }
+        }
+
+        private void ReservationsView_Unloaded(object sender, RoutedEventArgs e)
+        {
+            _db?.Dispose();
+        }
+
+        private void PopulateTimeSlots(DateTime date)
+        {
+            var open = new TimeSpan(11, 0, 0);  // 11 AM
+            var close = new TimeSpan(22, 0, 0); // 10 PM
+            var step = TimeSpan.FromMinutes(30);
+
+            var times = new List<DateTime>();
+            for (var t = open; t <= close; t += step)
+            {
+                var at = date.Date.Add(t);
+                if (date.Date == DateTime.Today && at <= DateTime.Now) continue;
+                times.Add(at);
             }
 
-            // ===== Form Fields =====
-            private DateTime? _newReservationDate = DateTime.Today;
-            public DateTime? NewReservationDate
+            // Items are DateTime; XAML ItemStringFormat shows "h:mm tt"
+            TimeCombo.ItemsSource = times;
+            TimeCombo.SelectedIndex = times.Count > 0 ? 0 : -1;
+        }
+
+        private void ValidateForm()
+        {
+            if (!_isLoaded) { BookButton.IsEnabled = false; return; }
+
+            bool hasRestaurant = RestaurantCombo?.SelectedItem is RestaurantItem;
+            bool hasDate = DatePicker?.SelectedDate is DateTime;
+            bool hasTime = TimeCombo?.SelectedItem is DateTime;
+            int maxParty = (int)PartySlider.Maximum;
+            bool partyOk = int.TryParse(PartyText?.Text, out int p) && p >= 1 && p <= maxParty;
+
+            BookButton.IsEnabled = hasRestaurant && hasDate && hasTime && partyOk;
+
+            StatusText.Text =
+                !hasRestaurant ? "Select a restaurant to continue." :
+                !hasDate ? "Choose a date for your reservation." :
+                !hasTime ? "Pick an available time." :
+                !partyOk ? $"Enter a party size between 1 and {maxParty}." :
+                "";
+        }
+
+        private async void BookButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_isLoaded || !BookButton.IsEnabled) return;
+
+            if (RestaurantCombo.SelectedItem is not RestaurantItem restaurant ||
+                TimeCombo.SelectedItem is not DateTime at)
             {
-                get => _newReservationDate;
-                set
+                ValidateForm();
+                return;
+            }
+
+            int party = int.TryParse(PartyText.Text, out var p) ? p : (int)PartySlider.Value;
+
+            var entity = new Reservation
+            {
+                RestaurantId = restaurant.Id,
+                UserId = _currentUserId,
+                At = at,
+                PartySize = party,
+                Status = ReservationStatus.Confirmed
+            };
+
+            try
+            {
+                await _db.Reservations.AddAsync(entity);
+                await _db.SaveChangesAsync();
+
+                var name = restaurant.Name;
+                _reservations.Add(new ReservationRow(entity, name));
+
+                // Reset inputs
+                DatePicker.SelectedDate = DateTime.Today;
+                PopulateTimeSlots(DateTime.Today);
+                PartySlider.Value = 2;
+                PartyText.Text = "2";
+
+                StatusText.Text = $"✅ Reserved {name} for {party} on {entity.At:ddd, MMM d h:mm tt}.";
+            }
+            catch (DbUpdateException ex)
+            {
+                StatusText.Text = $"Could not save reservation: {ex.GetBaseException().Message}";
+            }
+            catch (Exception ex)
+            {
+                StatusText.Text = $"Unexpected error: {ex.Message}";
+            }
+        }
+
+        private async void StatusFilterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_isLoaded) return;
+
+            var selectedText =
+                (StatusFilterCombo.SelectedItem as ComboBoxItem)?.Content?.ToString()
+                ?? "All";
+
+            try
+            {
+                if (selectedText.Equals("All", StringComparison.OrdinalIgnoreCase))
                 {
-                    Set(ref _newReservationDate, value);
-                    RaisePropertyChanged(nameof(CanCreate));
-                    CommandManager.InvalidateRequerySuggested();
-                }
-            }
-
-            public ObservableCollection<string> TimeSlots { get; } = new();
-            private string _newReservationTime;
-            public string NewReservationTime
-            {
-                get => _newReservationTime;
-                set
-                {
-                    Set(ref _newReservationTime, value);
-                    RaisePropertyChanged(nameof(CanCreate));
-                    CommandManager.InvalidateRequerySuggested();
-                }
-            }
-
-            public ObservableCollection<int> PartySizes { get; } = new(Enumerable.Range(1, 12));
-            private int _newPartySize = 2;
-            public int NewPartySize
-            {
-                get => _newPartySize;
-                set
-                {
-                    Set(ref _newPartySize, value);
-                    RaisePropertyChanged(nameof(CanCreate));
-                    CommandManager.InvalidateRequerySuggested();
-                }
-            }
-
-            public Array ReservationStatuses { get; } = Enum.GetValues(typeof(ReservationStatus));
-            private ReservationStatus _newStatus = ReservationStatus.Confirmed;
-            public ReservationStatus NewStatus
-            {
-                get => _newStatus;
-                set => Set(ref _newStatus, value);
-            }
-
-            // ===== Search =====
-            private string _restaurantSearch = string.Empty;
-            public string RestaurantSearch
-            {
-                get => _restaurantSearch;
-                set
-                {
-                    if (Set(ref _restaurantSearch, value))
-                        FilteredRestaurants.Refresh();
-                }
-            }
-
-            private bool FilterRestaurants(object obj)
-            {
-                if (obj is not Restaurant r) return false;
-                if (string.IsNullOrWhiteSpace(RestaurantSearch)) return true;
-
-                var q = RestaurantSearch.Trim();
-                return (r.Name?.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0)
-                       || (r.Address?.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0);
-            }
-
-            // ===== Reservation Create Command =====
-            public ICommand CreateReservationCommand { get; }
-            public bool CanCreate =>
-                SelectedRestaurant != null &&
-                NewReservationDate.HasValue &&
-                !string.IsNullOrWhiteSpace(NewReservationTime) &&
-                NewPartySize > 0;
-
-            private string _createErrorMessage;
-            public string CreateErrorMessage { get => _createErrorMessage; set => Set(ref _createErrorMessage, value); }
-
-            private string _createSuccessMessage;
-            public string CreateSuccessMessage { get => _createSuccessMessage; set => Set(ref _createSuccessMessage, value); }
-
-            private void CreateReservation()
-            {
-                CreateErrorMessage = CreateSuccessMessage = string.Empty;
-
-                if (!DateTime.TryParseExact(NewReservationTime, "HH:mm", null, DateTimeStyles.None, out var parsedTime))
-                {
-                    CreateErrorMessage = "Invalid time.";
+                    await LoadReservationsAsync();
                     return;
                 }
 
-                var at = NewReservationDate!.Value.Date
-                    .AddHours(parsedTime.Hour)
-                    .AddMinutes(parsedTime.Minute);
-
-                var newRes = new Reservation
+                if (Enum.TryParse<ReservationStatus>(selectedText, true, out var status))
                 {
-                    RestaurantId = SelectedRestaurant.Id,
-                    UserId = _currentUserId,
-                    At = at,
-                    PartySize = NewPartySize,
-                    Status = NewStatus
-                };
+                    _reservations.Clear();
 
-                using var db = new DineConnectContext();
-                db.Reservations.Add(newRes);
-                db.SaveChanges();
+                    var filtered = await _db.Reservations
+                                            .AsNoTracking()
+                                            .Where(r => r.Status == status)
+                                            .OrderBy(r => r.At)
+                                            .ToListAsync();
 
-                CreateSuccessMessage = $"Reservation created for {SelectedRestaurant.Name} at {at:g}.";
-
-                RefreshReservationsForSelected(); // ✅ Reload from DB
+                    var restNames = _restaurants.ToDictionary(r => r.Id, r => r.Name);
+                    foreach (var r in filtered)
+                    {
+                        var name = restNames.TryGetValue(r.RestaurantId, out var n) ? n : $"#{r.RestaurantId}";
+                        _reservations.Add(new ReservationRow(r, name));
+                    }
+                }
             }
-
-            // ===== PropertyChanged =====
-            public event PropertyChangedEventHandler PropertyChanged;
-            private void RaisePropertyChanged([CallerMemberName] string prop = null)
-                => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
-
-            protected bool Set<T>(ref T field, T value, [CallerMemberName] string prop = null)
+            catch (Exception ex)
             {
-                if (Equals(field, value)) return false;
-                field = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
-                return true;
+                StatusText.Text = $"Filter error: {ex.Message}";
             }
         }
 
-        // ===== RelayCommand helper =====
-        private class RelayCommand : ICommand
+        // Helper models for binding
+        private sealed class RestaurantItem
         {
-            private readonly Action<object> _execute;
-            private readonly Predicate<object> _canExecute;
+            public int Id { get; set; }
+            public string Name { get; set; } = "";
+            public override string ToString() => Name;
+        }
 
-            public RelayCommand(Action<object> execute, Predicate<object> canExecute = null)
+        private sealed class ReservationRow
+        {
+            public ReservationRow(Reservation r, string restaurantName)
             {
-                _execute = execute;
-                _canExecute = canExecute;
+                Id = r.Id;
+                RestaurantId = r.RestaurantId;
+                RestaurantName = restaurantName;
+                UserId = r.UserId;
+                At = r.At;
+                PartySize = r.PartySize;
+                Status = r.Status;
             }
 
-            public bool CanExecute(object parameter) => _canExecute?.Invoke(parameter) ?? true;
-            public void Execute(object parameter) => _execute(parameter);
-
-            public event EventHandler CanExecuteChanged
-            {
-                add => CommandManager.RequerySuggested += value;
-                remove => CommandManager.RequerySuggested -= value;
-            }
+            public int Id { get; }
+            public int RestaurantId { get; }
+            public string RestaurantName { get; }
+            public int UserId { get; }
+            public DateTime At { get; }
+            public int PartySize { get; }
+            public ReservationStatus Status { get; }
         }
     }
 }
