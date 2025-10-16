@@ -36,9 +36,9 @@ namespace DineConnect.App
                 case "ReservationsButton":
                     MainFrame.Navigate(new ReservationsView());
                     break;
-                    //case "CommunityPicksButton":
-                    //    MainFrame.Navigate(new CommunityPicksView());
-                    //    break;
+                 case "CommunityPicksButton":
+                   MainFrame.Navigate(new CommunityView());
+                  break;
             }
         }
     }
