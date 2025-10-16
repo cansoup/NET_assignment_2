@@ -13,5 +13,8 @@ public class Restaurant
     public double Lat { get; set; }
     public double Lng { get; set; }
     public string Phone { get; set; }
+
+    // naviation property
+    public virtual ICollection<Favorite> FavoriteByUsers { get; set; } = new HashSet<Favorite>();
 }
 

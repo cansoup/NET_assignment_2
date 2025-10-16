@@ -13,6 +13,7 @@ public class DineConnectContext : DbContext
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<Favorite> Favorites => Set<Favorite>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)
     {
@@ -27,5 +28,19 @@ public class DineConnectContext : DbContext
     protected override void OnModelCreating(ModelBuilder model)
     {
         // optional: relationships, constraints, seed data, etc.
+        base.OnModelCreating(model);
+
+        model.Entity<Favorite>()
+            .HasKey(f => new { f.UserId, f.RestaurantId }); // Composite key
+
+        model.Entity<Favorite>()
+            .HasOne(f => f.User)
+            .WithMany(u => u.Favorites) 
+            .HasForeignKey(f => f.UserId);
+
+        model.Entity<Favorite>()
+            .HasOne(f => f.Restaurant)
+            .WithMany(r => r.FavoriteByUsers)
+            .HasForeignKey(f => f.RestaurantId);
     }
 }
