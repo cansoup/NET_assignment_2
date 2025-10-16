@@ -4,173 +4,182 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             d:DesignWidth="1200" d:DesignHeight="700"
-             MinWidth="760" MinHeight="520"
+             d:DesignHeight="450" d:DesignWidth="800"
              Background="White">
 
-    <UserControl.Resources>
-        <Style x:Key="CardBorder" TargetType="Border">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="16"/>
-            <Setter Property="BorderBrush" Value="#e5e7eb"/>
-            <Setter Property="BorderThickness" Value="1"/>
-        </Style>
-
-        <Style x:Key="SectionTitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="18"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0 0 0 8"/>
-        </Style>
-
-        <GridLength x:Key="LabelWidth">110</GridLength>
-
-        <DataTemplate x:Key="RestaurantItemTemplate">
-            <Grid Margin="0,4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding Cuisine}" Foreground="#6b7280" FontSize="12"/>
-                    <TextBlock Text="{Binding Location}" Foreground="#9ca3af" FontSize="12"/>
-                </StackPanel>
-                <TextBlock Grid.Column="1" VerticalAlignment="Center"
-                           Text="›" FontSize="18" Foreground="#9ca3af" Margin="8,0,0,0"/>
-            </Grid>
-        </DataTemplate>
-
-        <Style TargetType="DataGrid">
-            <Setter Property="AutoGenerateColumns" Value="False"/>
-            <Setter Property="CanUserAddRows" Value="False"/>
-            <Setter Property="CanUserDeleteRows" Value="False"/>
-            <Setter Property="HeadersVisibility" Value="Column"/>
-            <Setter Property="RowHeaderWidth" Value="0"/>
-            <Setter Property="SelectionMode" Value="Single"/>
-            <Setter Property="SelectionUnit" Value="FullRow"/>
-            <Setter Property="Margin" Value="0,8,0,0"/>
-        </Style>
-    </UserControl.Resources>
-
+    <!-- 
+        Responsive principles:
+        - Two-column Grid with star sizing; left column has MinWidth to prevent squish.
+        - ScrollViewer on the form to avoid clipping on small windows.
+        - Controls stretch horizontally; DataGrid fills available space and resizes columns.
+    -->
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="360" MinWidth="300"/>
+            <ColumnDefinition Width="12"/>
+            <!-- gutter -->
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <!-- Header -->
-        <DockPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="Reservations" FontSize="24" FontWeight="Bold" DockPanel.Dock="Left"/>
-            <TextBlock Text="{Binding SelectedRestaurant.Name, StringFormat=Selected: {0}}"
-                       Foreground="#6b7280" Margin="12,4,0,0"/>
-        </DockPanel>
-
-        <!-- Body -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="3*"/>
-                <ColumnDefinition Width="7*"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- LEFT: Restaurants -->
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,12,0">
-                <DockPanel>
-                    <TextBox DockPanel.Dock="Top" Margin="0,0,0,8" Padding="8"
-                             Height="36"
-                             Text="{Binding RestaurantSearch, UpdateSourceTrigger=PropertyChanged}"
-                             Tag="Search restaurants..." />
-                    <!-- Note: PlaceholderText isn’t in classic WPF; using Tag to avoid warnings -->
-                    <ListBox ItemsSource="{Binding FilteredRestaurants}"
-                             SelectedItem="{Binding SelectedRestaurant}"
-                             ItemTemplate="{StaticResource RestaurantItemTemplate}"
-                             HorizontalContentAlignment="Stretch">
-                        <ListBox.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem">
-                                <Setter Property="Padding" Value="10"/>
-                                <Setter Property="BorderBrush" Value="#e5e7eb"/>
-                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                            </Style>
-                        </ListBox.ItemContainerStyle>
-                    </ListBox>
-                </DockPanel>
-            </Border>
-
-            <!-- RIGHT: Reservation form + list -->
-            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+        <!-- Left: Booking form -->
+        <Border Grid.Column="0"
+                Padding="18"
+                BorderBrush="#e5e7eb"
+                BorderThickness="1"
+                CornerRadius="8"
+                Background="White">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel>
-                    <!-- Form -->
-                    <Border Style="{StaticResource CardBorder}">
-                        <StackPanel>
-                            <TextBlock Text="Create Reservation" Style="{StaticResource SectionTitle}"/>
+                    <TextBlock Text="New Reservation"
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,16"
+                               Foreground="#111827"/>
 
-                            <Grid Margin="0,4,0,0">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="{StaticResource LabelWidth}"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
+                    <!-- Restaurant -->
+                    <TextBlock Text="Restaurant"
+                               Margin="0,0,0,6"
+                               FontWeight="Medium"/>
+                    <ComboBox x:Name="RestaurantCombo"
+                              HorizontalAlignment="Stretch"
+                              MinHeight="34"
+                              Padding="6"
+                              IsEditable="False"
+                              DisplayMemberPath="Name"
+                              SelectedValuePath="Id"
+                              Margin="0,0,0,12"/>
 
-                                <TextBlock Text="Restaurant" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Margin="0,0,0,8"
-                                           Text="{Binding SelectedRestaurant.Name, TargetNullValue=— Select a restaurant —}"/>
+                    <!-- Date -->
+                    <TextBlock Text="Date"
+                               Margin="0,4,0,6"
+                               FontWeight="Medium"/>
+                    <DatePicker x:Name="DatePicker"
+                                HorizontalAlignment="Stretch"
+                                SelectedDateFormat="Long"
+                                Margin="0,0,0,12"/>
 
-                                <TextBlock Text="Date" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                <DatePicker Grid.Row="1" Grid.Column="1" Margin="0,0,0,8"
-                                            SelectedDate="{Binding NewReservationDate, Mode=TwoWay}"/>
+                    <!-- Time -->
+                    <TextBlock Text="Time"
+                               Margin="0,4,0,6"
+                               FontWeight="Medium"/>
+                    <ComboBox x:Name="TimeCombo"
+                              HorizontalAlignment="Stretch"
+                              MinHeight="34"
+                              Padding="6"
+                              Margin="0,0,0,12"/>
 
-                                <TextBlock Text="Time" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,0,0,8"
-                                          ItemsSource="{Binding TimeSlots}"
-                                          SelectedItem="{Binding NewReservationTime, Mode=TwoWay}"/>
+                    <!-- Party size -->
+                    <TextBlock Text="Party Size"
+                               Margin="0,4,0,6"
+                               FontWeight="Medium"/>
+                    <DockPanel LastChildFill="True" Margin="0,0,0,12">
+                        <Slider x:Name="PartySlider"
+                                Minimum="1" Maximum="12"
+                                TickFrequency="1"
+                                IsSnapToTickEnabled="True"
+                                SmallChange="1" LargeChange="1"
+                                VerticalAlignment="Center"
+                                Margin="0,0,8,0"/>
+                        <TextBox x:Name="PartyText"
+                                 Width="56"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 TextAlignment="Center"
+                                 Padding="4"
+                                 Text="{Binding ElementName=PartySlider, Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    </DockPanel>
 
-                                <TextBlock Text="Party Size" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,0,0,8"
-                                          ItemsSource="{Binding PartySizes}"
-                                          SelectedItem="{Binding NewPartySize, Mode=TwoWay}"/>
+                    <!-- Book button -->
+                    <Button x:Name="BookButton"
+                            Content="Book Reservation"
+                            Padding="10"
+                            Background="#4f46e5"
+                            Foreground="White"
+                            FontWeight="Bold"
+                            HorizontalAlignment="Stretch"
+                            Click="BookButton_Click"/>
 
-                                <TextBlock Text="Status" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <ComboBox Grid.Row="4" Grid.Column="1"
-                                          ItemsSource="{Binding ReservationStatuses}"
-                                          SelectedItem="{Binding NewStatus, Mode=TwoWay}"/>
-                            </Grid>
-
-                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                                <Button Content="Create Reservation"
-                                        Padding="10,6"
-                                        Width="180"
-                                        IsEnabled="{Binding CanCreate}"
-                                        Command="{Binding CreateReservationCommand}"/>
-                                <TextBlock Text="{Binding CreateErrorMessage}" Foreground="#b91c1c" Margin="12,8,0,0"/>
-                                <TextBlock Text="{Binding CreateSuccessMessage}" Foreground="#065f46" Margin="12,8,0,0"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Table -->
-                    <Border Style="{StaticResource CardBorder}" Margin="0,12,0,0">
-                        <StackPanel>
-                            <TextBlock Text="Reservations for Selected Restaurant" Style="{StaticResource SectionTitle}"/>
-                            <DataGrid ItemsSource="{Binding ReservationsForSelected}"
-                                      MinRowHeight="34">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Date" Binding="{Binding At, StringFormat=\{0:yyyy-MM-dd\}}"/>
-                                    <DataGridTextColumn Header="Time" Binding="{Binding At, StringFormat=\{0:HH\\:mm\}}"/>
-                                    <DataGridTextColumn Header="Party" Binding="{Binding PartySize}"/>
-                                    <DataGridTextColumn Header="User" Binding="{Binding UserId}"/>
-                                    <DataGridTextColumn Header="Status" Binding="{Binding Status}"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
-                        </StackPanel>
-                    </Border>
+                    <!-- Validation / status -->
+                    <TextBlock x:Name="StatusText"
+                               Margin="0,10,0,0"
+                               Foreground="#065f46"
+                               TextWrapping="Wrap"/>
                 </StackPanel>
             </ScrollViewer>
-        </Grid>
+        </Border>
+
+        <!-- Right: existing reservations -->
+        <Border Grid.Column="2"
+                Padding="0"
+                BorderBrush="#e5e7eb"
+                BorderThickness="1"
+                CornerRadius="8"
+                Background="White">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header / filters -->
+                <DockPanel Grid.Row="0" Margin="12,12,12,8">
+                    <TextBlock Text="Your Reservations"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="#111827"
+                               DockPanel.Dock="Left"
+                               VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="Status:"
+                                   VerticalAlignment="Center"
+                                   Margin="16,0,6,0"/>
+                        <!-- Note: no IsSelected in XAML; we set SelectedIndex in code-behind to avoid early SelectionChanged -->
+                        <ComboBox x:Name="StatusFilterCombo"
+                                  Width="140"
+                                  SelectionChanged="StatusFilterCombo_SelectionChanged">
+                            <ComboBoxItem Content="All"/>
+                            <ComboBoxItem Content="Pending"/>
+                            <ComboBoxItem Content="Confirmed"/>
+                            <ComboBoxItem Content="Cancelled"/>
+                        </ComboBox>
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Data grid -->
+                <DataGrid x:Name="ReservationsGrid"
+                          Grid.Row="1"
+                          Margin="12,0,12,12"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          IsReadOnly="True"
+                          HeadersVisibility="Column"
+                          RowDetailsVisibilityMode="Collapsed"
+                          EnableRowVirtualization="True"
+                          ColumnWidth="*"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="80" />
+                        <DataGridTextColumn Header="Restaurant" Binding="{Binding RestaurantName}" Width="2*" />
+                        <!-- The StringFormat below is properly escaped to avoid XLS0413 -->
+                        <DataGridTextColumn Header="When"
+                                            Width="2*">
+                            <DataGridTextColumn.Binding>
+                                <Binding Path="At" StringFormat='{}{0:dddd, MMM d, yyyy h:mm tt}' />
+                            </DataGridTextColumn.Binding>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Party" Binding="{Binding PartySize}" Width="100"/>
+                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="140"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Footer hint -->
+                <TextBlock Grid.Row="2"
+                           Margin="12,0,12,12"
+                           Foreground="#6b7280"
+                           Text="Tip: Resize the window — the grid and form adapt automatically."/>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>
