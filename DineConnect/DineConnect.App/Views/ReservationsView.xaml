@@ -66,22 +66,20 @@
                     <TextBlock Text="Party Size"
                                Margin="0,4,0,6"
                                FontWeight="Medium"/>
-                    <DockPanel LastChildFill="True" Margin="0,0,0,12">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                         <Slider x:Name="PartySlider"
-                                Minimum="1" Maximum="12"
-                                TickFrequency="1"
-                                IsSnapToTickEnabled="True"
-                                SmallChange="1" LargeChange="1"
-                                VerticalAlignment="Center"
-                                Margin="0,0,8,0"/>
+            Width="120"
+            Minimum="1" Maximum="12"
+            TickFrequency="1"
+            IsSnapToTickEnabled="True"
+            SmallChange="1" LargeChange="1"/>
                         <TextBox x:Name="PartyText"
-                                 Width="56"
-                                 HorizontalContentAlignment="Center"
-                                 VerticalContentAlignment="Center"
-                                 TextAlignment="Center"
-                                 Padding="4"
-                                 Text="{Binding ElementName=PartySlider, Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                    </DockPanel>
+             Width="40"
+             Margin="8,0,0,0"
+             TextAlignment="Center"
+             Text="{Binding ElementName=PartySlider, Path=Value, Mode=TwoWay}"/>
+                    </StackPanel>
+
 
                     <!-- Book button -->
                     <Button x:Name="BookButton"
@@ -165,11 +163,6 @@
                     </DataGrid.Columns>
                 </DataGrid>
 
-                <!-- Footer hint -->
-                <TextBlock Grid.Row="2"
-                           Margin="12,0,12,12"
-                           Foreground="#6b7280"
-                           Text="Tip: Resize the window — the grid and form adapt automatically."/>
             </Grid>
         </Border>
     </Grid>
