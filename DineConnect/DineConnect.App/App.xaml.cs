@@ -1,58 +1,45 @@
-﻿using DineConnect.App.Views.Auth;
-﻿using DineConnect.App.Data;
+﻿﻿using DineConnect.App.Data;
+using DineConnect.App.Views.Auth;
 using System.Linq;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace DineConnect.App
 {
     public partial class App : Application
     {
+        private static bool _mainCreated = false;
         private async void Application_Startup(object sender, StartupEventArgs e)
         {
             using var db = new DineConnectContext();
             await DbSeed.EnsureCreatedAndSeedAsync(db);
 
-            var loginWindow = new LoginWindow();
-            Current.MainWindow = loginWindow;
-            loginWindow.Show();
+            var login = new LoginWindow
+            {
+                WindowStartupLocation = WindowStartupLocation.CenterScreen
+            };
+
+            bool? ok = login.ShowDialog(); // must be ShowDialog()
+
+            if (ok == true && !_mainCreated)
+            {
+                _mainCreated = true; // prevent any accidental second creation
+                var main = new MainWindow();
+                Current.MainWindow = main;   // set before Show
+                main.Show();
+
+                // flip back on the next tick (prevents “already shutting down” race)
+                Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                {
+                    if (Current != null)
+                        Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
+                }));
+            }
+            else
+            {
+                Current.Shutdown();
+            }
         }
-
-        // Uncomment below to see if data was added:
-        /*
-        System.Diagnostics.Debug.WriteLine("========= DEBUG DB SEED REPORT =========");
-
-        var userCount = db.Users.Count();
-        System.Diagnostics.Debug.WriteLine($"Users ({userCount}):");
-        db.Users.ToList().ForEach(u =>
-            System.Diagnostics.Debug.WriteLine($" -> [User] {u.Id} | {u.UserName}")
-        );
-
-        var restaurantCount = db.Restaurants.Count();
-        System.Diagnostics.Debug.WriteLine($"Restaurants ({restaurantCount}):");
-        db.Restaurants.ToList().ForEach(r =>
-            System.Diagnostics.Debug.WriteLine($" -> [Restaurant] {r.Id} | {r.Name} | {r.Address}")
-        );
-
-        var postCount = db.Posts.Count();
-        System.Diagnostics.Debug.WriteLine($"Posts ({postCount}):");
-        db.Posts.ToList().ForEach(p =>
-            System.Diagnostics.Debug.WriteLine($" -> [Post] {p.Id} | {p.Title} | From User {p.UserId}")
-        );
-
-        var commentCount = db.Comments.Count();
-        System.Diagnostics.Debug.WriteLine($"Comments ({commentCount}):");
-        db.Comments.ToList().ForEach(c =>
-            System.Diagnostics.Debug.WriteLine($" -> [Comment] {c.Id} | On Post {c.PostId} | By User {c.UserId}")
-        );
-
-        var reservationCount = db.Reservations.Count();
-        System.Diagnostics.Debug.WriteLine($"Reservations ({reservationCount}):");
-        db.Reservations.ToList().ForEach(rv =>
-            System.Diagnostics.Debug.WriteLine($" -> [Reservation] {rv.Id} | Restaurant {rv.RestaurantId} | User {rv.UserId} | {rv.At} | {rv.Status}")
-        );
-
-        System.Diagnostics.Debug.WriteLine("=========================================");
-        */
 
     }
 }
