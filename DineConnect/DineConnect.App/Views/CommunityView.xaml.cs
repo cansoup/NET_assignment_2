@@ -1,5 +1,6 @@
 ﻿using DineConnect.App.Data;
 using DineConnect.App.Models;
+using DineConnect.App.Services;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.ObjectModel;
@@ -106,7 +107,7 @@ namespace DineConnect.App.Views
             {
                 Title = title,
                 Content = content,
-                UserId = 10000001 // TODO: change to logged in user (currently alice)
+                UserId = AppState.CurrentUser.Id
             };
 
             try
@@ -147,7 +148,7 @@ namespace DineConnect.App.Views
             {
                 PostId = post.Id,
                 Content = text,
-                UserId = 10000001 // TODO: change to logged in user (currently alice)
+                UserId = AppState.CurrentUser.Id
             };
 
             try
