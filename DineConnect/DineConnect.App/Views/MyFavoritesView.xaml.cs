@@ -1,4 +1,6 @@
 ﻿using DineConnect.App.Services;
+using DineConnect.App.Models;
+using Microsoft.EntityFrameworkCore;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -10,7 +12,6 @@ namespace DineConnect.App.Views
     /// </summary>
     public partial class MyFavoritesView : UserControl
     {
-        private readonly GooglePlacesService _placeService;
         private readonly FavoriteService _favoriteService;
         private readonly DineConnectContext _dbContext;
         private DispatcherTimer _debounceTimer;
@@ -18,7 +19,6 @@ namespace DineConnect.App.Views
         public MyFavoritesView()
         {
             InitializeComponent();
-            _placeService = new GooglePlacesService();
             _dbContext = new DineConnectContext();
             _favoriteService = new FavoriteService(_dbContext);
         }
@@ -26,34 +26,55 @@ namespace DineConnect.App.Views
         private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
             // debounceTimer for search input
-            _debounceTimer = new DispatcherTimer();
-            _debounceTimer.Interval = TimeSpan.FromMilliseconds(500);
+            _debounceTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(500)
+            };
             _debounceTimer.Tick += OnDebounceTimerTick;
 
             await LoadFavoritesAsync();
         }
 
-        // timer tick event: google API
-        private async void OnDebounceTimerTick(object sender, EventArgs e)
+        // timer tick event: query EF for restaurants
+        private async void OnDebounceTimerTick(object? sender, EventArgs e)
         {
             _debounceTimer.Stop();
             var searchText = SearchTextBox.Text;
 
             if (string.IsNullOrWhiteSpace(searchText))
             {
+                ResultsListBox.ItemsSource = null;
                 ResultsListBox.Visibility = Visibility.Collapsed;
                 return;
             }
 
-            var suggestions = await _placeService.GetAutocompleteSuggestionAsync(searchText);
+            try
+            {
+                // Basic contains search on Name OR Address; tweak to your needs (e.g., EF.Functions.Like for case-insensitive SQL)
+                var suggestions = await _dbContext.Restaurants
+                    .AsNoTracking()
+                    .Where(r =>
+                        r.Name.Contains(searchText) ||
+                        (r.Address != null && r.Address.Contains(searchText)))
+                    .OrderBy(r => r.Name)
+                    .Take(20)
+                    .ToListAsync();
 
-            if (suggestions != null && suggestions.Any())
-            {
-                ResultsListBox.ItemsSource = suggestions;
-                ResultsListBox.Visibility = Visibility.Visible;
+                if (suggestions.Any())
+                {
+                    ResultsListBox.ItemsSource = suggestions;
+                    ResultsListBox.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    ResultsListBox.ItemsSource = null;
+                    ResultsListBox.Visibility = Visibility.Collapsed;
+                }
             }
-            else
+            catch (Exception ex)
             {
+                // Optional: log ex
+                ResultsListBox.ItemsSource = null;
                 ResultsListBox.Visibility = Visibility.Collapsed;
             }
         }
@@ -67,11 +88,8 @@ namespace DineConnect.App.Views
 
         private async void AddFavoriteButton_Click(object sender, RoutedEventArgs e)
         {
-            if (ResultsListBox.SelectedItem is not Prediction selectedPlace)
-            {
-                MessageBox.Show("Please select a restaurant from the list.", "Selection Required", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+            // Selected restaurant from EF suggestions is optional; user might type a new one
+            Restaurant? selectedRestaurant = ResultsListBox.SelectedItem as Restaurant;
 
             if (RatingComboBox.SelectedItem is not ComboBoxItem selectedRatingItem)
             {
@@ -85,11 +103,31 @@ namespace DineConnect.App.Views
                 return;
             }
 
-            var rating = int.Parse(selectedRatingItem.Content.ToString().Split(' ')[0]);
+            var rating = int.Parse(selectedRatingItem.Content.ToString()!.Split(' ')[0]);
 
-            var parts = selectedPlace.description.Split(new[] { ',' }, 2);
-            var name = parts[0].Trim();
-            var address = (parts.Length > 1) ? parts[1].Trim() : "";
+            // If user selected from suggestions, use that; otherwise parse the input "Name, Address" or just Name
+            string input = SearchTextBox.Text?.Trim() ?? string.Empty;
+
+            string name;
+            string address;
+
+            if (selectedRestaurant != null)
+            {
+                name = selectedRestaurant.Name?.Trim() ?? string.Empty;
+                address = selectedRestaurant.Address?.Trim() ?? string.Empty;
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    MessageBox.Show("Please enter or select a restaurant.", "Input Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var parts = input.Split(new[] { ',' }, 2);
+                name = parts[0].Trim();
+                address = (parts.Length > 1) ? parts[1].Trim() : string.Empty;
+            }
 
             bool added = await _favoriteService.AddFavoriteAsync(AppState.CurrentUser.Id, name, address, rating);
 
@@ -101,6 +139,7 @@ namespace DineConnect.App.Views
                 SearchTextBox.Clear();
                 RatingComboBox.SelectedIndex = -1;
                 ResultsListBox.Visibility = Visibility.Collapsed;
+                ResultsListBox.ItemsSource = null;
             }
             else
             {
@@ -121,17 +160,22 @@ namespace DineConnect.App.Views
             }
             else
             {
+                FavoritesListView.ItemsSource = null;
                 FavoritesListView.Visibility = Visibility.Collapsed;
                 NoFavoritesText.Visibility = Visibility.Visible;
-            }   
+            }
         }
 
         private void ResultsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ResultsListBox.SelectedItem is Prediction selected)
+            if (ResultsListBox.SelectedItem is Restaurant selected)
             {
                 SearchTextBox.TextChanged -= SearchTextBox_TextChanged;
-                SearchTextBox.Text = selected.description;
+                // Mirror the previous UX: put "Name, Address" into the textbox
+                var display = string.IsNullOrWhiteSpace(selected.Address)
+                    ? selected.Name
+                    : $"{selected.Name}, {selected.Address}";
+                SearchTextBox.Text = display;
                 SearchTextBox.TextChanged += SearchTextBox_TextChanged;
 
                 ResultsListBox.Visibility = Visibility.Collapsed;
