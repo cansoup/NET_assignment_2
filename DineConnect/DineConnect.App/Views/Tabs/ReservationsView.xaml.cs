@@ -1,12 +1,6 @@
-﻿using DineConnect.App.Data;
-using DineConnect.App.Models;
+﻿using DineConnect.App.Models;
 using DineConnect.App.Services;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -14,18 +8,18 @@ namespace DineConnect.App.Views
 {
     public partial class ReservationsView : UserControl
     {
-        // EF context
-        private readonly DineConnectContext _db;
+        // Service (owns its own DbContext)
+        private readonly ReservationsService _service;
 
         // UI state
-        private readonly ObservableCollection<ReservationRow> _reservations = new();
-        private List<RestaurantItem> _restaurants = new();
+        private readonly ObservableCollection<ReservationsService.ReservationRow> _reservations = new();
+        private List<ReservationsService.RestaurantItem> _restaurants = new();
         private bool _isLoaded;
 
         public ReservationsView()
         {
             InitializeComponent();
-            _db = new DineConnectContext();
+            _service = new ReservationsService();
             Loaded += ReservationsView_Loaded;
             Unloaded += ReservationsView_Unloaded;
         }
@@ -34,8 +28,8 @@ namespace DineConnect.App.Views
         {
             try
             {
-                // Seed & ensure DB is there
-                await DbSeed.EnsureCreatedAndSeedAsync(_db);
+                // 0) Ensure DB exists/seeded via service
+                await _service.EnsureInitializedAsync();
 
                 // 1) Bind UI collections
                 ReservationsGrid.ItemsSource = _reservations;
@@ -47,7 +41,7 @@ namespace DineConnect.App.Views
                 PartySlider.Value = 2;
                 PartyText.Text = "2";
 
-                // 3) Load EF data
+                // 3) Load data via service
                 await LoadRestaurantsAsync();
                 await LoadReservationsAsync();
 
@@ -77,13 +71,7 @@ namespace DineConnect.App.Views
 
         private async Task LoadRestaurantsAsync()
         {
-            var list = await _db.Restaurants
-                                .AsNoTracking()
-                                .OrderBy(r => r.Name)
-                                .Select(r => new RestaurantItem { Id = r.Id, Name = r.Name })
-                                .ToListAsync();
-
-            _restaurants = list;
+            _restaurants = await _service.GetRestaurantsAsync();
             RestaurantCombo.ItemsSource = _restaurants;
         }
 
@@ -92,25 +80,15 @@ namespace DineConnect.App.Views
             _reservations.Clear();
 
             var userId = AppState.CurrentUser.Id;
+            var rows = await _service.GetReservationsForUserAsync(userId);
 
-            var reservations = await _db.Reservations
-                                        .AsNoTracking()
-                                        .Where(r => r.UserId == userId) // only current user
-                                        .OrderBy(r => r.At)
-                                        .ToListAsync();
-
-            var restNames = _restaurants.ToDictionary(r => r.Id, r => r.Name);
-
-            foreach (var r in reservations)
-            {
-                var name = restNames.TryGetValue(r.RestaurantId, out var n) ? n : $"#{r.RestaurantId}";
-                _reservations.Add(new ReservationRow(r, name));
-            }
+            foreach (var row in rows)
+                _reservations.Add(row);
         }
 
         private void ReservationsView_Unloaded(object sender, RoutedEventArgs e)
         {
-            _db?.Dispose();
+            _service?.Dispose();
         }
 
         private void PopulateTimeSlots(DateTime date)
@@ -136,7 +114,7 @@ namespace DineConnect.App.Views
         {
             if (!_isLoaded) { BookButton.IsEnabled = false; return; }
 
-            bool hasRestaurant = RestaurantCombo?.SelectedItem is RestaurantItem;
+            bool hasRestaurant = RestaurantCombo?.SelectedItem is ReservationsService.RestaurantItem;
             bool hasDate = DatePicker?.SelectedDate is DateTime;
             bool hasTime = TimeCombo?.SelectedItem is DateTime;
             int maxParty = (int)PartySlider.Maximum;
@@ -156,7 +134,7 @@ namespace DineConnect.App.Views
         {
             if (!_isLoaded || !BookButton.IsEnabled) return;
 
-            if (RestaurantCombo.SelectedItem is not RestaurantItem restaurant ||
+            if (RestaurantCombo.SelectedItem is not ReservationsService.RestaurantItem restaurant ||
                 TimeCombo.SelectedItem is not DateTime at)
             {
                 ValidateForm();
@@ -165,39 +143,26 @@ namespace DineConnect.App.Views
 
             int party = int.TryParse(PartyText.Text, out var p) ? p : (int)PartySlider.Value;
 
-            var entity = new Reservation
+            var result = await _service.CreateReservationAsync(
+                AppState.CurrentUser.Id, restaurant.Id, at, party);
+
+            if (!result.Ok)
             {
-                RestaurantId = restaurant.Id,
-                UserId = AppState.CurrentUser.Id,
-                At = at,
-                PartySize = party,
-                Status = ReservationStatus.Confirmed
-            };
-
-            try
-            {
-                await _db.Reservations.AddAsync(entity);
-                await _db.SaveChangesAsync();
-
-                var name = restaurant.Name;
-                _reservations.Add(new ReservationRow(entity, name));
-
-                // Reset inputs
-                DatePicker.SelectedDate = DateTime.Today;
-                PopulateTimeSlots(DateTime.Today);
-                PartySlider.Value = 2;
-                PartyText.Text = "2";
-
-                StatusText.Text = $"✅ Reserved {name} for {party} on {entity.At:ddd, MMM d h:mm tt}.";
+                StatusText.Text = $"Could not save reservation: {result.Error}";
+                return;
             }
-            catch (DbUpdateException ex)
-            {
-                StatusText.Text = $"Could not save reservation: {ex.GetBaseException().Message}";
-            }
-            catch (Exception ex)
-            {
-                StatusText.Text = $"Unexpected error: {ex.Message}";
-            }
+
+            // Add to UI
+            if (result.Created is not null)
+                _reservations.Add(result.Created);
+
+            // Reset inputs
+            DatePicker.SelectedDate = DateTime.Today;
+            PopulateTimeSlots(DateTime.Today);
+            PartySlider.Value = 2;
+            PartyText.Text = "2";
+
+            StatusText.Text = $"✅ Reserved {restaurant.Name} for {party} on {at:ddd, MMM d h:mm tt}.";
         }
 
         private async void StatusFilterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -221,19 +186,10 @@ namespace DineConnect.App.Views
                     _reservations.Clear();
 
                     var userId = AppState.CurrentUser.Id;
+                    var rows = await _service.GetReservationsForUserByStatusAsync(userId, status);
 
-                    var filtered = await _db.Reservations
-                                            .AsNoTracking()
-                                            .Where(r => r.UserId == userId && r.Status == status) // user + status
-                                            .OrderBy(r => r.At)
-                                            .ToListAsync();
-
-                    var restNames = _restaurants.ToDictionary(r => r.Id, r => r.Name);
-                    foreach (var r in filtered)
-                    {
-                        var name = restNames.TryGetValue(r.RestaurantId, out var n) ? n : $"#{r.RestaurantId}";
-                        _reservations.Add(new ReservationRow(r, name));
-                    }
+                    foreach (var r in rows)
+                        _reservations.Add(r);
                 }
             }
             catch (Exception ex)
@@ -245,7 +201,7 @@ namespace DineConnect.App.Views
         // Delete button handler
         private async void DeleteReservation_Click(object sender, RoutedEventArgs e)
         {
-            if ((sender as Button)?.DataContext is not ReservationRow row)
+            if ((sender as Button)?.DataContext is not ReservationsService.ReservationRow row)
             {
                 StatusText.Text = "Could not determine which reservation to delete.";
                 return;
@@ -266,69 +222,15 @@ namespace DineConnect.App.Views
 
             if (confirm != MessageBoxResult.Yes) return;
 
-            try
+            var result = await _service.DeleteReservationAsync(AppState.CurrentUser.Id, row.Id);
+            if (!result.Ok)
             {
-                // Load tracked entity (rows were loaded AsNoTracking)
-                var entity = await _db.Reservations.FindAsync(row.Id);
-                if (entity is null)
-                {
-                    StatusText.Text = $"Reservation #{row.Id} no longer exists.";
-                    // Remove from UI to keep things consistent
-                    _reservations.Remove(row);
-                    return;
-                }
-
-                 if (entity.UserId != AppState.CurrentUser.Id)
-                {
-                    StatusText.Text = "You can only delete your own reservations.";
-                    return;
-                }
-
-                _db.Reservations.Remove(entity);
-                await _db.SaveChangesAsync();
-
-                _reservations.Remove(row);
-
-                StatusText.Text = $"🗑️ Deleted reservation #{row.Id} for \"{row.RestaurantName}\".";
-            }
-            catch (DbUpdateException ex)
-            {
-                StatusText.Text = $"Could not delete reservation: {ex.GetBaseException().Message}";
-            }
-            catch (Exception ex)
-            {
-                StatusText.Text = $"Unexpected error while deleting: {ex.Message}";
-            }
-        }
-
-        // Helper models for binding
-        private sealed class RestaurantItem
-        {
-            public int Id { get; set; }
-            public string Name { get; set; } = "";
-            public override string ToString() => Name;
-        }
-
-        private sealed class ReservationRow
-        {
-            public ReservationRow(Reservation r, string restaurantName)
-            {
-                Id = r.Id;
-                RestaurantId = r.RestaurantId;
-                RestaurantName = restaurantName;
-                UserId = r.UserId;
-                At = r.At;
-                PartySize = r.PartySize;
-                Status = r.Status;
+                StatusText.Text = $"Could not delete reservation: {result.Error}";
+                return;
             }
 
-            public int Id { get; }
-            public int RestaurantId { get; }
-            public string RestaurantName { get; }
-            public int UserId { get; }
-            public DateTime At { get; }
-            public int PartySize { get; }
-            public ReservationStatus Status { get; }
+            _reservations.Remove(row);
+            StatusText.Text = $"🗑️ Deleted reservation #{row.Id} for \"{row.RestaurantName}\".";
         }
     }
 }
