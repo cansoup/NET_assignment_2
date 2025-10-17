@@ -15,5 +15,7 @@ namespace DineConnect.App.Models
 
         // Navigation
         public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+       // naviation property
+        public virtual ICollection<Favorite> FavoriteByUsers { get; set; } = new HashSet<Favorite>();
     }
 }

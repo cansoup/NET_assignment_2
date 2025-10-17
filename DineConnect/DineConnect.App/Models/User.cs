@@ -12,5 +12,8 @@ namespace DineConnect.App.Models
         public string UserName { get; set; }
         public string PasswordHash { get; set; }
 
+        // This collection links a user to their favorite entries
+        public virtual ICollection<Favorite> Favorites { get; set; } = new HashSet<Favorite>(); 
+
     }
 }
