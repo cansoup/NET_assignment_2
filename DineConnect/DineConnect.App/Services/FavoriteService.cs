@@ -1,5 +1,6 @@
 ﻿using DineConnect.App.Data;
 using DineConnect.App.Models;
+using DineConnect.App.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace DineConnect.App.Services
@@ -7,7 +8,7 @@ namespace DineConnect.App.Services
     /// <summary>
     /// Service layer for Favorites. Encapsulates all EF and data access.
     /// </summary>
-    public sealed class FavoriteService : IDisposable
+    public sealed class FavoriteService : IDisposable, IInitializableService
     {
         private readonly DineConnectContext _db;
         private bool _disposed;
