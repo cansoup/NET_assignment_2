@@ -47,7 +47,7 @@ public class AuthService : IInitializableService
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
 
-        var newUser = new Models.User
+        var newUser = new DineConnect.App.Models.User
         {
             UserName = normalizedUsername,
             PasswordHash = passwordHash
