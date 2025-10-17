@@ -1,5 +1,6 @@
 ﻿using DineConnect.App.Data;
 using DineConnect.App.Models;
+using DineConnect.App.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace DineConnect.App.Services
@@ -7,7 +8,7 @@ namespace DineConnect.App.Services
     /// <summary>
     /// Service layer for community feed (posts & comments). Encapsulates all EF/data access.
     /// </summary>
-    public sealed class CommunityService : IDisposable
+    public sealed class CommunityService : IDisposable, IInitializableService
     {
         private readonly DineConnectContext _db;
         private bool _disposed;
