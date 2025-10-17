@@ -1,4 +1,6 @@
 ﻿using DineConnect.App.Services;
+using DineConnect.App.Services.Validation;
+using System.Linq;
 using System.Windows;
 
 namespace DineConnect.App.Views.Auth
@@ -14,8 +16,22 @@ namespace DineConnect.App.Views.Auth
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
+            var username = UsernameTextBox.Text;
+            var password = PasswordBox.Password;
 
-            var isSuccess = await _authService.LoginAsync(UsernameTextBox.Text, PasswordBox.Password);
+            var validation = ValidateUser.ValidateLoginInput(username, password);
+
+            if (!validation.IsValid)
+            {
+                MessageBox.Show(
+                    string.Join("\n", validation.Errors),
+                    "Validation Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            var isSuccess = await _authService.LoginAsync(username, password);
 
             if (isSuccess)
             {
@@ -23,8 +39,10 @@ namespace DineConnect.App.Views.Auth
             }
             else
             {
-                MessageBox.Show("Invalid username or password.", "Login Failed",
-                                MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Invalid username or password.",
+                                "Login Failed",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
             }
         }
 
@@ -35,7 +53,6 @@ namespace DineConnect.App.Views.Auth
             {
                 UsernameTextBox.Text = registerWindow.RegisteredUsername;
             }
-
         }
     }
 }
