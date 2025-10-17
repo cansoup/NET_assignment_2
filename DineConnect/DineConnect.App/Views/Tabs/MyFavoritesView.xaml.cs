@@ -1,41 +1,56 @@
 ﻿using DineConnect.App.Services;
-using DineConnect.App.Models;
-using Microsoft.EntityFrameworkCore;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
 namespace DineConnect.App.Views
 {
-    /// <summary>
-    /// Interaction logic for MyFavoritesView.xaml
-    /// </summary>
     public partial class MyFavoritesView : UserControl
     {
         private readonly FavoriteService _favoriteService;
-        private readonly DineConnectContext _dbContext;
         private DispatcherTimer _debounceTimer;
+        private bool _isLoaded;
 
         public MyFavoritesView()
         {
             InitializeComponent();
-            _dbContext = new DineConnectContext();
-            _favoriteService = new FavoriteService(_dbContext);
+            _favoriteService = new FavoriteService(); // service owns its DbContext
+            Loaded += UserControl_Loaded;
+            Unloaded += UserControl_Unloaded;
         }
 
         private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            // debounceTimer for search input
-            _debounceTimer = new DispatcherTimer
+            try
             {
-                Interval = TimeSpan.FromMilliseconds(500)
-            };
-            _debounceTimer.Tick += OnDebounceTimerTick;
+                await _favoriteService.EnsureInitializedAsync();
 
-            await LoadFavoritesAsync();
+                _debounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+                _debounceTimer.Tick += OnDebounceTimerTick;
+
+                await LoadFavoritesAsync();
+
+                _isLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Initialization error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
-        // timer tick event: query EF for restaurants
+        private void UserControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            _debounceTimer?.Stop();
+            _favoriteService?.Dispose();
+        }
+
+        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!_isLoaded) return;
+            _debounceTimer.Stop();
+            _debounceTimer.Start();
+        }
+
         private async void OnDebounceTimerTick(object? sender, EventArgs e)
         {
             _debounceTimer.Stop();
@@ -50,18 +65,11 @@ namespace DineConnect.App.Views
 
             try
             {
-                // Basic contains search on Name OR Address; tweak to your needs (e.g., EF.Functions.Like for case-insensitive SQL)
-                var suggestions = await _dbContext.Restaurants
-                    .AsNoTracking()
-                    .Where(r =>
-                        r.Name.Contains(searchText) ||
-                        (r.Address != null && r.Address.Contains(searchText)))
-                    .OrderBy(r => r.Name)
-                    .Take(20)
-                    .ToListAsync();
+                var suggestions = await _favoriteService.SearchRestaurantsAsync(searchText, take: 20);
 
                 if (suggestions.Any())
                 {
+                    // XAML expects Name/Address; RestaurantSuggestion matches that.
                     ResultsListBox.ItemsSource = suggestions;
                     ResultsListBox.Visibility = Visibility.Visible;
                 }
@@ -71,25 +79,20 @@ namespace DineConnect.App.Views
                     ResultsListBox.Visibility = Visibility.Collapsed;
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                // Optional: log ex
                 ResultsListBox.ItemsSource = null;
                 ResultsListBox.Visibility = Visibility.Collapsed;
             }
         }
 
-        // timer restarted on text changed
-        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            _debounceTimer.Stop();
-            _debounceTimer.Start();
-        }
-
         private async void AddFavoriteButton_Click(object sender, RoutedEventArgs e)
         {
-            // Selected restaurant from EF suggestions is optional; user might type a new one
-            Restaurant? selectedRestaurant = ResultsListBox.SelectedItem as Restaurant;
+            if (AppState.CurrentUser == null)
+            {
+                MessageBox.Show("Error: No user is logged in.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
             if (RatingComboBox.SelectedItem is not ComboBoxItem selectedRatingItem)
             {
@@ -97,27 +100,25 @@ namespace DineConnect.App.Views
                 return;
             }
 
-            if (AppState.CurrentUser == null)
+            var ratingText = selectedRatingItem.Content?.ToString() ?? "0";
+            if (!int.TryParse(ratingText.Split(' ')[0], out var rating))
             {
-                MessageBox.Show("Error: No user is logged in.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Invalid rating selection.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
-            var rating = int.Parse(selectedRatingItem.Content.ToString()!.Split(' ')[0]);
-
-            // If user selected from suggestions, use that; otherwise parse the input "Name, Address" or just Name
-            string input = SearchTextBox.Text?.Trim() ?? string.Empty;
-
+            // If user selected from suggestions, use that; otherwise parse "Name, Address" or just Name
             string name;
             string address;
 
-            if (selectedRestaurant != null)
+            if (ResultsListBox.SelectedItem is FavoriteService.RestaurantSuggestion selected)
             {
-                name = selectedRestaurant.Name?.Trim() ?? string.Empty;
-                address = selectedRestaurant.Address?.Trim() ?? string.Empty;
+                name = selected.Name?.Trim() ?? "";
+                address = selected.Address?.Trim() ?? "";
             }
             else
             {
+                string input = (SearchTextBox.Text ?? "").Trim();
                 if (string.IsNullOrWhiteSpace(input))
                 {
                     MessageBox.Show("Please enter or select a restaurant.", "Input Required", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -126,35 +127,44 @@ namespace DineConnect.App.Views
 
                 var parts = input.Split(new[] { ',' }, 2);
                 name = parts[0].Trim();
-                address = (parts.Length > 1) ? parts[1].Trim() : string.Empty;
+                address = (parts.Length > 1) ? parts[1].Trim() : "";
             }
 
-            bool added = await _favoriteService.AddFavoriteAsync(AppState.CurrentUser.Id, name, address, rating);
+            var result = await _favoriteService.AddFavoriteAsync(AppState.CurrentUser.Id, name, address, rating);
 
-            if (added)
+            if (!result.Ok)
             {
-                MessageBox.Show($"{name} has been added to your favorites!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                await LoadFavoritesAsync();
+                MessageBox.Show(result.Error ?? "Could not add favorite.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
 
-                SearchTextBox.Clear();
-                RatingComboBox.SelectedIndex = -1;
-                ResultsListBox.Visibility = Visibility.Collapsed;
-                ResultsListBox.ItemsSource = null;
-            }
-            else
-            {
-                MessageBox.Show("This restaurant is already in your favorites.", "Already Exists", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
+            MessageBox.Show($"{name} has been added to your favorites!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            // Refresh list to reflect the new item (service returns DTO with nested Restaurant)
+            await LoadFavoritesAsync();
+
+            // Reset inputs
+            SearchTextBox.Clear();
+            RatingComboBox.SelectedIndex = -1;
+            ResultsListBox.Visibility = Visibility.Collapsed;
+            ResultsListBox.ItemsSource = null;
         }
 
         private async Task LoadFavoritesAsync()
         {
-            if (AppState.CurrentUser == null) return;
-
-            var favorites = await _favoriteService.GetFavoritesForUserAsync(AppState.CurrentUser.Id);
-            if (favorites.Any())
+            if (AppState.CurrentUser == null)
             {
-                FavoritesListView.ItemsSource = favorites;
+                FavoritesListView.ItemsSource = null;
+                FavoritesListView.Visibility = Visibility.Collapsed;
+                NoFavoritesText.Visibility = Visibility.Visible;
+                return;
+            }
+
+            var rows = await _favoriteService.GetFavoritesForUserAsync(AppState.CurrentUser.Id);
+
+            if (rows.Any())
+            {
+                FavoritesListView.ItemsSource = rows; // List<FavoriteService.FavoriteRow>
                 FavoritesListView.Visibility = Visibility.Visible;
                 NoFavoritesText.Visibility = Visibility.Collapsed;
             }
@@ -168,14 +178,16 @@ namespace DineConnect.App.Views
 
         private void ResultsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ResultsListBox.SelectedItem is Restaurant selected)
+            if (ResultsListBox.SelectedItem is FavoriteService.RestaurantSuggestion selected)
             {
                 SearchTextBox.TextChanged -= SearchTextBox_TextChanged;
-                // Mirror the previous UX: put "Name, Address" into the textbox
+
                 var display = string.IsNullOrWhiteSpace(selected.Address)
                     ? selected.Name
                     : $"{selected.Name}, {selected.Address}";
+
                 SearchTextBox.Text = display;
+
                 SearchTextBox.TextChanged += SearchTextBox_TextChanged;
 
                 ResultsListBox.Visibility = Visibility.Collapsed;
