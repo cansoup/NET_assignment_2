@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DineConnect Map</title>
+    <meta charset="utf-8" />
+    <style>
+        html, body, #map {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        function initMap() {
+            const location = { lat: --33.8688, lng: 151.2093 }
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 12,
+                center: location,
+                disableDefaultUI: true
+            })
+        }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBwKOrbPdEu5GxuFoj_P4TTUWXUvt4cPAk&callback=initMap"></script>
+</body>
+</html>
