@@ -15,9 +15,12 @@ namespace DineConnect.App.Data
             // Users
             if (!await db.Users.AnyAsync())
             {
+                var aliceHash = BCrypt.Net.BCrypt.HashPassword("hash123");
+                var bobHash = BCrypt.Net.BCrypt.HashPassword("hash456");
+
                 db.Users.AddRange(
-                    new Models.User { Id = 10000001, UserName = "alice", PasswordHash = "hash123" },
-                    new Models.User { Id = 10000002, UserName = "bob", PasswordHash = "hash456" }
+                    new Models.User { Id = 10000001, UserName = "alice", PasswordHash = aliceHash },
+                    new Models.User { Id = 10000002, UserName = "bob", PasswordHash = bobHash }
                 );
                 await db.SaveChangesAsync();
             }

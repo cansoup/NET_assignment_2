@@ -13,7 +13,17 @@ namespace DineConnect.App.Services
             if (user == null) return false; // User not found
 
             // Verify the provided password against the sotred hash
-            return BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+            bool verified = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+
+            if (verified)
+            {
+                AppState.CurrentUser = user;
+                return true;
+            }
+            else
+            {
+                return false; // Password mismatch
+            }
         }
 
         public async Task<bool> RegisterAsync(string username, string password)
