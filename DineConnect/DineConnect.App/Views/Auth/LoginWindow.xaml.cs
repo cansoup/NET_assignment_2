@@ -14,25 +14,28 @@ namespace DineConnect.App.Views.Auth
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
+
             var isSuccess = await _authService.LoginAsync(UsernameTextBox.Text, PasswordBox.Password);
 
             if (isSuccess)
             {
-                // If login is successful, open the main window and close this one.
-                var mainWindow = new MainWindow();
-                mainWindow.Show();
-                Close();
+                DialogResult = true; // closes login and returns true to App.xaml.cs
             }
             else
             {
-                MessageBox.Show("Invalid username or password.", "Login Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Invalid username or password.", "Login Failed",
+                                MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void RegisterHyperlink_Click(object sender, RoutedEventArgs e)
         {
-            var registerWindow = new RegisterWindow();
-            registerWindow.ShowDialog();
+            var registerWindow = new RegisterWindow { Owner = this };
+            if (registerWindow.ShowDialog() == true)
+            {
+                UsernameTextBox.Text = registerWindow.RegisteredUsername;
+            }
+
         }
     }
 }
