@@ -213,9 +213,6 @@ namespace DineConnect.App.Views
             }
         }
 
-        /// <summary>
-        /// Enables the Add button only when Restaurant (name/address) and Rating are valid.
-        /// </summary>
         private void ValidateFavoriteForm()
         {
             // Resolve rating
@@ -228,9 +225,6 @@ namespace DineConnect.App.Views
             AddFavoriteButton.IsEnabled = restaurantValid && ratingValid;
         }
 
-        /// <summary>
-        /// Parses rating from the combo box selection (expects e.g., "5 Stars ⭐⭐⭐⭐⭐").
-        /// </summary>
         private bool TryGetSelectedRating(out int rating)
         {
             rating = -1;
@@ -242,9 +236,6 @@ namespace DineConnect.App.Views
             return int.TryParse(token, out rating);
         }
 
-        /// <summary>
-        /// Resolves restaurant name/address from either the selected suggestion or manual input "Name, Address".
-        /// </summary>
         private (string name, string address) ResolveNameAndAddress()
         {
             if (ResultsListBox.SelectedItem is FavoriteService.RestaurantSuggestion selected)
@@ -262,6 +253,45 @@ namespace DineConnect.App.Views
             var name = parts[0].Trim();
             var address = (parts.Length > 1) ? parts[1].Trim() : string.Empty;
             return (name, address);
+        }
+
+        private async void DeleteFavorite_Click(object sender, RoutedEventArgs e)
+        {
+            if ((sender as Button)?.DataContext is not FavoriteService.FavoriteRow row)
+            {
+                MessageBox.Show("Could not determine which favorite to delete.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (AppState.CurrentUser == null)
+            {
+                MessageBox.Show("Error: No user is logged in.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+
+            var name = row.Restaurant?.Name ?? "(Unknown)";
+            var confirm = MessageBox.Show(
+                $"Delete favorite \"{name}\"?",
+                "Confirm Delete",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (confirm != MessageBoxResult.Yes) return;
+
+            var result = await _favoriteService.DeleteFavoriteAsync(AppState.CurrentUser.Id, row.FavoriteId);
+
+            if (!result.Ok)
+            {
+                MessageBox.Show(result.Error ?? "Could not delete favorite.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            await LoadFavoritesAsync();
+            MessageBox.Show($"🗑️ Deleted favorite \"{name}\".", "Deleted", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            // Refresh form state
+            ValidateFavoriteForm();
         }
     }
 }
