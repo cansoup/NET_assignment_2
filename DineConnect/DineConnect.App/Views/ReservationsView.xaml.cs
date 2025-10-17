@@ -1,5 +1,6 @@
 ﻿using DineConnect.App.Data;
 using DineConnect.App.Models;
+using DineConnect.App.Services;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -21,13 +22,10 @@ namespace DineConnect.App.Views
         private List<RestaurantItem> _restaurants = new();
         private bool _isLoaded;
 
-        // TODO: Replace with signed-in user id
-        private readonly int _currentUserId = 10000001;
-
         public ReservationsView()
         {
             InitializeComponent();
-            _db = new DineConnectContext();         
+            _db = new DineConnectContext();
             Loaded += ReservationsView_Loaded;
             Unloaded += ReservationsView_Unloaded;
         }
@@ -93,8 +91,11 @@ namespace DineConnect.App.Views
         {
             _reservations.Clear();
 
+            var userId = AppState.CurrentUser.Id;
+
             var reservations = await _db.Reservations
                                         .AsNoTracking()
+                                        .Where(r => r.UserId == userId) // only current user
                                         .OrderBy(r => r.At)
                                         .ToListAsync();
 
@@ -167,7 +168,7 @@ namespace DineConnect.App.Views
             var entity = new Reservation
             {
                 RestaurantId = restaurant.Id,
-                UserId = _currentUserId,
+                UserId = AppState.CurrentUser.Id,
                 At = at,
                 PartySize = party,
                 Status = ReservationStatus.Confirmed
@@ -219,9 +220,11 @@ namespace DineConnect.App.Views
                 {
                     _reservations.Clear();
 
+                    var userId = AppState.CurrentUser.Id;
+
                     var filtered = await _db.Reservations
                                             .AsNoTracking()
-                                            .Where(r => r.Status == status)
+                                            .Where(r => r.UserId == userId && r.Status == status) // user + status
                                             .OrderBy(r => r.At)
                                             .ToListAsync();
 
@@ -248,6 +251,13 @@ namespace DineConnect.App.Views
                 return;
             }
 
+            // Defensive: ensure user can only delete their own reservations
+            if (row.UserId != AppState.CurrentUser.Id)
+            {
+                StatusText.Text = "You can only delete your own reservations.";
+                return;
+            }
+
             var confirm = MessageBox.Show(
                 $"Delete reservation #{row.Id} at \"{row.RestaurantName}\" on {row.At:ddd, MMM d h:mm tt}?",
                 "Confirm Delete",
@@ -265,6 +275,12 @@ namespace DineConnect.App.Views
                     StatusText.Text = $"Reservation #{row.Id} no longer exists.";
                     // Remove from UI to keep things consistent
                     _reservations.Remove(row);
+                    return;
+                }
+
+                 if (entity.UserId != AppState.CurrentUser.Id)
+                {
+                    StatusText.Text = "You can only delete your own reservations.";
                     return;
                 }
 
