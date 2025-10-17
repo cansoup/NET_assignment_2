@@ -1,4 +1,8 @@
 ﻿using DineConnect.App.Services;
+using DineConnect.App.Services.Validation;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -15,6 +19,7 @@ namespace DineConnect.App.Views
         {
             InitializeComponent();
             _favoriteService = new FavoriteService(); // service owns its DbContext
+
             Loaded += UserControl_Loaded;
             Unloaded += UserControl_Unloaded;
         }
@@ -28,9 +33,17 @@ namespace DineConnect.App.Views
                 _debounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
                 _debounceTimer.Tick += OnDebounceTimerTick;
 
+                // Wire selection changed for rating here (keeps XAML unchanged)
+                RatingComboBox.SelectionChanged += RatingComboBox_SelectionChanged;
+
                 await LoadFavoritesAsync();
 
                 _isLoaded = true;
+
+                // initial UI state
+                ResultsListBox.Visibility = Visibility.Collapsed;
+                AddFavoriteButton.IsEnabled = false;
+                ValidateFavoriteForm();
             }
             catch (Exception ex)
             {
@@ -42,19 +55,57 @@ namespace DineConnect.App.Views
         {
             _debounceTimer?.Stop();
             _favoriteService?.Dispose();
+
+            // cleanup event handlers
+            if (_debounceTimer != null)
+                _debounceTimer.Tick -= OnDebounceTimerTick;
+
+            RatingComboBox.SelectionChanged -= RatingComboBox_SelectionChanged;
         }
 
         private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (!_isLoaded) return;
+
             _debounceTimer.Stop();
             _debounceTimer.Start();
+
+            // Re-evaluate form validity as user types
+            ValidateFavoriteForm();
+        }
+
+        private void RatingComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_isLoaded) return;
+            ValidateFavoriteForm();
+        }
+
+        private void ResultsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ResultsListBox.SelectedItem is FavoriteService.RestaurantSuggestion selected)
+            {
+                // Prevent recursive TextChanged handling while we update the textbox
+                SearchTextBox.TextChanged -= SearchTextBox_TextChanged;
+
+                var display = string.IsNullOrWhiteSpace(selected.Address)
+                    ? selected.Name
+                    : $"{selected.Name}, {selected.Address}";
+
+                SearchTextBox.Text = display;
+
+                SearchTextBox.TextChanged += SearchTextBox_TextChanged;
+
+                ResultsListBox.Visibility = Visibility.Collapsed;
+                _debounceTimer.Stop();
+            }
+
+            ValidateFavoriteForm();
         }
 
         private async void OnDebounceTimerTick(object? sender, EventArgs e)
         {
             _debounceTimer.Stop();
-            var searchText = SearchTextBox.Text;
+            var searchText = (SearchTextBox.Text ?? string.Empty).Trim();
 
             if (string.IsNullOrWhiteSpace(searchText))
             {
@@ -69,7 +120,6 @@ namespace DineConnect.App.Views
 
                 if (suggestions.Any())
                 {
-                    // XAML expects Name/Address; RestaurantSuggestion matches that.
                     ResultsListBox.ItemsSource = suggestions;
                     ResultsListBox.Visibility = Visibility.Visible;
                 }
@@ -94,40 +144,26 @@ namespace DineConnect.App.Views
                 return;
             }
 
-            if (RatingComboBox.SelectedItem is not ComboBoxItem selectedRatingItem)
+            // Resolve rating from combo
+            if (!TryGetSelectedRating(out var rating))
             {
+                // Shouldn’t happen because button disable logic guards this,
+                // but keep as defensive fallback
                 MessageBox.Show("Please select a rating.", "Selection Required", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            var ratingText = selectedRatingItem.Content?.ToString() ?? "0";
-            if (!int.TryParse(ratingText.Split(' ')[0], out var rating))
+            // Resolve name/address from selection or manual input
+            var (name, address) = ResolveNameAndAddress();
+
+            // Defensive re-validation (button enable ensures validity already)
+            var restaurantValidation = ValidateRestaurant.ValidateUpsert(name, address);
+            var ratingValidation = ValidateRating.Validate(rating);
+            if (!restaurantValidation.IsValid || !ratingValidation.IsValid)
             {
-                MessageBox.Show("Invalid rating selection.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                var errors = restaurantValidation.Errors.Concat(ratingValidation.Errors);
+                MessageBox.Show(string.Join("\n", errors), "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
-            }
-
-            // If user selected from suggestions, use that; otherwise parse "Name, Address" or just Name
-            string name;
-            string address;
-
-            if (ResultsListBox.SelectedItem is FavoriteService.RestaurantSuggestion selected)
-            {
-                name = selected.Name?.Trim() ?? "";
-                address = selected.Address?.Trim() ?? "";
-            }
-            else
-            {
-                string input = (SearchTextBox.Text ?? "").Trim();
-                if (string.IsNullOrWhiteSpace(input))
-                {
-                    MessageBox.Show("Please enter or select a restaurant.", "Input Required", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                var parts = input.Split(new[] { ',' }, 2);
-                name = parts[0].Trim();
-                address = (parts.Length > 1) ? parts[1].Trim() : "";
             }
 
             var result = await _favoriteService.AddFavoriteAsync(AppState.CurrentUser.Id, name, address, rating);
@@ -140,7 +176,6 @@ namespace DineConnect.App.Views
 
             MessageBox.Show($"{name} has been added to your favorites!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            // Refresh list to reflect the new item (service returns DTO with nested Restaurant)
             await LoadFavoritesAsync();
 
             // Reset inputs
@@ -148,6 +183,8 @@ namespace DineConnect.App.Views
             RatingComboBox.SelectedIndex = -1;
             ResultsListBox.Visibility = Visibility.Collapsed;
             ResultsListBox.ItemsSource = null;
+
+            ValidateFavoriteForm();
         }
 
         private async Task LoadFavoritesAsync()
@@ -176,23 +213,55 @@ namespace DineConnect.App.Views
             }
         }
 
-        private void ResultsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        /// <summary>
+        /// Enables the Add button only when Restaurant (name/address) and Rating are valid.
+        /// </summary>
+        private void ValidateFavoriteForm()
+        {
+            // Resolve rating
+            var ratingValid = TryGetSelectedRating(out var rating) && ValidateRating.Validate(rating).IsValid;
+
+            // Resolve current name/address
+            var (name, address) = ResolveNameAndAddress();
+            var restaurantValid = ValidateRestaurant.ValidateUpsert(name, address).IsValid;
+
+            AddFavoriteButton.IsEnabled = restaurantValid && ratingValid;
+        }
+
+        /// <summary>
+        /// Parses rating from the combo box selection (expects e.g., "5 Stars ⭐⭐⭐⭐⭐").
+        /// </summary>
+        private bool TryGetSelectedRating(out int rating)
+        {
+            rating = -1;
+            if (RatingComboBox.SelectedItem is not ComboBoxItem selectedRatingItem)
+                return false;
+
+            var ratingText = selectedRatingItem.Content?.ToString() ?? string.Empty;
+            var token = ratingText.Split(' ').FirstOrDefault();
+            return int.TryParse(token, out rating);
+        }
+
+        /// <summary>
+        /// Resolves restaurant name/address from either the selected suggestion or manual input "Name, Address".
+        /// </summary>
+        private (string name, string address) ResolveNameAndAddress()
         {
             if (ResultsListBox.SelectedItem is FavoriteService.RestaurantSuggestion selected)
             {
-                SearchTextBox.TextChanged -= SearchTextBox_TextChanged;
-
-                var display = string.IsNullOrWhiteSpace(selected.Address)
-                    ? selected.Name
-                    : $"{selected.Name}, {selected.Address}";
-
-                SearchTextBox.Text = display;
-
-                SearchTextBox.TextChanged += SearchTextBox_TextChanged;
-
-                ResultsListBox.Visibility = Visibility.Collapsed;
-                _debounceTimer.Stop();
+                var selName = (selected.Name ?? string.Empty).Trim();
+                var selAddr = (selected.Address ?? string.Empty).Trim();
+                return (selName, selAddr);
             }
+
+            var input = (SearchTextBox.Text ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(input))
+                return (string.Empty, string.Empty);
+
+            var parts = input.Split(new[] { ',' }, 2);
+            var name = parts[0].Trim();
+            var address = (parts.Length > 1) ? parts[1].Trim() : string.Empty;
+            return (name, address);
         }
     }
 }

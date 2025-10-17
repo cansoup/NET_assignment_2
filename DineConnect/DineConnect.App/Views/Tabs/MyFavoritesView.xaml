@@ -41,7 +41,7 @@
                 <ComboBoxItem Content="1 Star ⭐"/>
             </ComboBox>
 
-            <Button x:Name="AddFavoriteButton" Content="Add to Favorites" Padding="10,5" Background="#4f46e5" Foreground="White" FontWeight="Bold" Margin="0,15,0,0" Click="AddFavoriteButton_Click"/>
+            <Button x:Name="AddFavoriteButton" Content="Add to Favorites" Padding="10,5" Background="#4f46e5" Foreground="White" FontWeight="Bold" Margin="0,15,0,0" Click="AddFavoriteButton_Click" IsEnabled="False"/>
         </StackPanel>
 
         <Border Grid.Column="1" BorderBrush="#e5e7eb" BorderThickness="1" CornerRadius="5">
