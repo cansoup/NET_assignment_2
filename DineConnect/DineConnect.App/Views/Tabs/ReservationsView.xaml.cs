@@ -1,5 +1,6 @@
 ﻿using DineConnect.App.Models;
 using DineConnect.App.Services;
+using DineConnect.App.Services.Validation;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -28,38 +29,28 @@ namespace DineConnect.App.Views
         {
             try
             {
-                // 0) Ensure DB exists/seeded via service
                 await _service.EnsureInitializedAsync();
-
-                // 1) Bind UI collections
                 ReservationsGrid.ItemsSource = _reservations;
 
-                // 2) Initialize date/time + party
+                // Init date/time defaults
                 DatePicker.DisplayDateStart = DateTime.Today;
                 DatePicker.SelectedDate = DateTime.Today;
                 PopulateTimeSlots(DateTime.Today);
+
                 PartySlider.Value = 2;
                 PartyText.Text = "2";
 
-                // 3) Load data via service
                 await LoadRestaurantsAsync();
                 await LoadReservationsAsync();
 
-                // 4) Wire handlers AFTER data is in place
-                DatePicker.SelectedDateChanged += (_, __) =>
-                {
-                    if (!_isLoaded) return;
-                    PopulateTimeSlots(DatePicker.SelectedDate ?? DateTime.Today);
-                    ValidateForm();
-                };
+                // Hook validation triggers AFTER data loaded
+                DatePicker.SelectedDateChanged += (_, __) => { if (_isLoaded) { PopulateTimeSlots(DatePicker.SelectedDate ?? DateTime.Today); ValidateForm(); } };
+                TimeCombo.SelectionChanged += (_, __) => { if (_isLoaded) ValidateForm(); };
+                RestaurantCombo.SelectionChanged += (_, __) => { if (_isLoaded) ValidateForm(); };
                 PartySlider.ValueChanged += (_, __) => { if (_isLoaded) ValidateForm(); };
                 PartyText.TextChanged += (_, __) => { if (_isLoaded) ValidateForm(); };
-                RestaurantCombo.SelectionChanged += (_, __) => { if (_isLoaded) ValidateForm(); };
-                TimeCombo.SelectionChanged += (_, __) => { if (_isLoaded) ValidateForm(); };
 
-                // 5) Default filter
                 StatusFilterCombo.SelectedIndex = 0;
-
                 _isLoaded = true;
                 ValidateForm();
             }
@@ -78,7 +69,6 @@ namespace DineConnect.App.Views
         private async Task LoadReservationsAsync()
         {
             _reservations.Clear();
-
             var userId = AppState.CurrentUser.Id;
             var rows = await _service.GetReservationsForUserAsync(userId);
 
@@ -105,7 +95,6 @@ namespace DineConnect.App.Views
                 times.Add(at);
             }
 
-            // Items are DateTime; XAML ItemStringFormat shows "h:mm tt"
             TimeCombo.ItemsSource = times;
             TimeCombo.SelectedIndex = times.Count > 0 ? 0 : -1;
         }
@@ -114,20 +103,15 @@ namespace DineConnect.App.Views
         {
             if (!_isLoaded) { BookButton.IsEnabled = false; return; }
 
-            bool hasRestaurant = RestaurantCombo?.SelectedItem is ReservationsService.RestaurantItem;
-            bool hasDate = DatePicker?.SelectedDate is DateTime;
-            bool hasTime = TimeCombo?.SelectedItem is DateTime;
-            int maxParty = (int)PartySlider.Maximum;
-            bool partyOk = int.TryParse(PartyText?.Text, out int p) && p >= 1 && p <= maxParty;
+            int? restaurantId = (RestaurantCombo.SelectedItem as ReservationsService.RestaurantItem)?.Id;
+            DateTime? at = TimeCombo.SelectedItem as DateTime?;
+            bool parsedParty = int.TryParse(PartyText?.Text, out int partySize);
+            int? party = parsedParty ? partySize : null;
 
-            BookButton.IsEnabled = hasRestaurant && hasDate && hasTime && partyOk;
+            var validation = ValidateReservation.ValidateCreate(restaurantId, at, party);
 
-            StatusText.Text =
-                !hasRestaurant ? "Select a restaurant to continue." :
-                !hasDate ? "Choose a date for your reservation." :
-                !hasTime ? "Pick an available time." :
-                !partyOk ? $"Enter a party size between 1 and {maxParty}." :
-                "";
+            BookButton.IsEnabled = validation.IsValid;
+            StatusText.Text = validation.IsValid ? "" : string.Join("\n", validation.Errors);
         }
 
         private async void BookButton_Click(object sender, RoutedEventArgs e)
@@ -137,26 +121,22 @@ namespace DineConnect.App.Views
             if (RestaurantCombo.SelectedItem is not ReservationsService.RestaurantItem restaurant ||
                 TimeCombo.SelectedItem is not DateTime at)
             {
-                ValidateForm();
+                StatusText.Text = "Invalid data. Please check fields.";
                 return;
             }
 
             int party = int.TryParse(PartyText.Text, out var p) ? p : (int)PartySlider.Value;
-
-            var result = await _service.CreateReservationAsync(
-                AppState.CurrentUser.Id, restaurant.Id, at, party);
+            var result = await _service.CreateReservationAsync(AppState.CurrentUser.Id, restaurant.Id, at, party);
 
             if (!result.Ok)
             {
-                StatusText.Text = $"Could not save reservation: {result.Error}";
+                StatusText.Text = $"❌ Could not save reservation: {result.Error}";
                 return;
             }
 
-            // Add to UI
             if (result.Created is not null)
                 _reservations.Add(result.Created);
 
-            // Reset inputs
             DatePicker.SelectedDate = DateTime.Today;
             PopulateTimeSlots(DateTime.Today);
             PartySlider.Value = 2;
@@ -169,9 +149,7 @@ namespace DineConnect.App.Views
         {
             if (!_isLoaded) return;
 
-            var selectedText =
-                (StatusFilterCombo.SelectedItem as ComboBoxItem)?.Content?.ToString()
-                ?? "All";
+            var selectedText = (StatusFilterCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All";
 
             try
             {
@@ -184,7 +162,6 @@ namespace DineConnect.App.Views
                 if (Enum.TryParse<ReservationStatus>(selectedText, true, out var status))
                 {
                     _reservations.Clear();
-
                     var userId = AppState.CurrentUser.Id;
                     var rows = await _service.GetReservationsForUserByStatusAsync(userId, status);
 
@@ -198,19 +175,17 @@ namespace DineConnect.App.Views
             }
         }
 
-        // Delete button handler
         private async void DeleteReservation_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as Button)?.DataContext is not ReservationsService.ReservationRow row)
             {
-                StatusText.Text = "Could not determine which reservation to delete.";
+                StatusText.Text = "❌ Could not determine which reservation to delete.";
                 return;
             }
 
-            // Defensive: ensure user can only delete their own reservations
             if (row.UserId != AppState.CurrentUser.Id)
             {
-                StatusText.Text = "You can only delete your own reservations.";
+                StatusText.Text = "❌ You can only delete your own reservations.";
                 return;
             }
 
@@ -225,7 +200,7 @@ namespace DineConnect.App.Views
             var result = await _service.DeleteReservationAsync(AppState.CurrentUser.Id, row.Id);
             if (!result.Ok)
             {
-                StatusText.Text = $"Could not delete reservation: {result.Error}";
+                StatusText.Text = $"❌ Could not delete reservation: {result.Error}";
                 return;
             }
 

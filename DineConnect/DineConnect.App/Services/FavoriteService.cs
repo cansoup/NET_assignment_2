@@ -186,6 +186,32 @@ namespace DineConnect.App.Services
             }
         }
 
+        public sealed record DeleteFavoriteResult(bool Ok, string? Error);
+
+        public async Task<DeleteFavoriteResult> DeleteFavoriteAsync(int userId, int favoriteId, CancellationToken ct = default)
+        {
+            try
+            {
+                // 1) Load the favorite, checking ownership
+                var favorite = await _db.Favorites
+                    .FirstOrDefaultAsync(f => f.Id == favoriteId && f.UserId == userId, ct);
+
+                if (favorite is null)
+                    return new(false, "Favorite not found or does not belong to this user.");
+
+                // 2) Remove it
+                _db.Favorites.Remove(favorite);
+                await _db.SaveChangesAsync(ct);
+
+                return new(true, null);
+            }
+            catch (Exception ex)
+            {
+                return new(false, ex.GetBaseException().Message);
+            }
+        }
+
+
         public void Dispose()
         {
             if (_disposed) return;

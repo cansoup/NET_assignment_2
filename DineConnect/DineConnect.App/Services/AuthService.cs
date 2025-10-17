@@ -1,5 +1,5 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using DineConnect.App.Services.Validation;
 
 namespace DineConnect.App.Services
 {
@@ -8,39 +8,39 @@ namespace DineConnect.App.Services
         public async Task<bool> LoginAsync(string username, string password)
         {
             await using var dbContext = new DineConnectContext();
-            var user = await dbContext.Users.FirstOrDefaultAsync(u => u.UserName == username);
 
-            if (user == null) return false; // User not found
+            var user = await dbContext.Users
+                .FirstOrDefaultAsync(u => u.UserName == username.Trim());
 
-            // Verify the provided password against the sotred hash
-            bool verified = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+            var v = ValidateUser.ValidateLoginInput(username, password, user?.PasswordHash);
 
-            if (verified)
-            {
-                AppState.CurrentUser = user;
-                return true;
-            }
-            else
-            {
-                return false; // Password mismatch
-            }
+            if (!v.IsValid || user == null) return false;
+
+            AppState.CurrentUser = user;
+            return true;
         }
+
 
         public async Task<bool> RegisterAsync(string username, string password)
         {
+            var v = ValidateUser.ValidateRegistrationInput(username, password);
+            if (!v.IsValid) return false;
+
             await using var dbContext = new DineConnectContext();
 
-            // Check if username is already taken
-            if (await dbContext.Users.AnyAsync(u => u.UserName == username))
-            {
-                return false; // Username already exists
-            }
+            var normalizedUsername = username.Trim();
+
+            // Check if username is already taken (DB concern stays here)
+            bool exists = await dbContext.Users
+                .AnyAsync(u => u.UserName == normalizedUsername);
+
+            if (exists) return false; // Username already exists
 
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
 
             var newUser = new Models.User
             {
-                UserName = username,
+                UserName = normalizedUsername,
                 PasswordHash = passwordHash
             };
 

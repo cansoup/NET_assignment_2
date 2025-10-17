@@ -1,6 +1,9 @@
 ﻿using DineConnect.App.Services;
+using DineConnect.App.Services.Validation; // ⬅️ import validators
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -8,10 +11,7 @@ namespace DineConnect.App.Views
 {
     public partial class CommunityView : UserControl
     {
-        // Service (owns its own DbContext)
         private readonly CommunityService _service;
-
-        // UI state (keeps view-only bits like NewCommentText)
         private readonly ObservableCollection<PostItem> _feed = new();
         private bool _isLoaded;
 
@@ -27,17 +27,12 @@ namespace DineConnect.App.Views
         {
             try
             {
-                // 0) Ensure DB exists/seeded via service
                 await _service.EnsureInitializedAsync();
-
-                // 1) Bind UI collections
                 FeedList.ItemsSource = _feed;
-
-                // 2) Load data via service
                 await LoadFeedAsync();
 
                 _isLoaded = true;
-                ValidatePostForm();
+                ValidatePostForm(); // now uses shared validator
             }
             catch (Exception ex)
             {
@@ -53,37 +48,39 @@ namespace DineConnect.App.Views
         private async Task LoadFeedAsync()
         {
             _feed.Clear();
-
             var rows = await _service.GetFeedAsync();
 
             foreach (var r in rows)
-            {
-                // Map service rows to lightweight view items (adds NewCommentText + observable comments)
-                var item = new PostItem(r);
-                _feed.Add(item);
-            }
+                _feed.Add(new PostItem(r));
 
             RightStatusText.Text = _feed.Count == 0 ? "No posts yet — be the first to post!" : "";
         }
 
+        // ✅ View calls shared validation to control UI state
         private void ValidatePostForm()
         {
-            bool ok = !string.IsNullOrWhiteSpace(PostTitleText?.Text)
-                   && !string.IsNullOrWhiteSpace(PostContentText?.Text);
-            PublishButton.IsEnabled = ok;
-            LeftStatusText.Text = ok ? "" : "Enter a title and some content to post.";
+            var title = (PostTitleText?.Text ?? string.Empty).Trim();
+            var content = (PostContentText?.Text ?? string.Empty).Trim();
+
+            var v = ValidatePost.ValidateCreateInput(title, content);
+
+            PublishButton.IsEnabled = v.IsValid;
+            LeftStatusText.Text = v.IsValid ? "" : string.Join("\n", v.Errors);
         }
 
         private async void PublishButton_Click(object sender, RoutedEventArgs e)
         {
             if (!_isLoaded) return;
 
-            var title = (PostTitleText.Text ?? "").Trim();
-            var content = (PostContentText.Text ?? "").Trim();
+            var title = (PostTitleText.Text ?? string.Empty).Trim();
+            var content = (PostContentText.Text ?? string.Empty).Trim();
 
-            if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(content))
+            // ✅ Validate before service call (no inline checks)
+            var v = ValidatePost.ValidateCreateInput(title, content);
+            if (!v.IsValid)
             {
-                ValidatePostForm();
+                PublishButton.IsEnabled = false;
+                LeftStatusText.Text = string.Join("\n", v.Errors);
                 return;
             }
 
@@ -94,7 +91,6 @@ namespace DineConnect.App.Views
                 return;
             }
 
-            // Reload feed (or insert at top if you prefer)
             await LoadFeedAsync();
 
             PostTitleText.Text = "";
@@ -112,10 +108,13 @@ namespace DineConnect.App.Views
                 return;
             }
 
-            var text = (post.NewCommentText ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(text))
+            var text = (post.NewCommentText ?? string.Empty).Trim();
+
+            // ✅ Validate comment via shared validator
+            var v = ValidateComment.ValidateCreateInput(text);
+            if (!v.IsValid)
             {
-                RightStatusText.Text = "Write a comment first.";
+                RightStatusText.Text = string.Join("\n", v.Errors);
                 return;
             }
 
@@ -126,7 +125,6 @@ namespace DineConnect.App.Views
                 return;
             }
 
-            // Reload (or append to the one PostItem.Comments)
             await LoadFeedAsync();
 
             RightStatusText.Text = "💬 Comment added.";
@@ -137,7 +135,6 @@ namespace DineConnect.App.Views
             ValidatePostForm();
         }
 
-        // View-only wrappers around the service DTOs (keeps UI-specific state out of the service)
         private sealed class PostItem : INotifyPropertyChanged
         {
             public PostItem(CommunityService.PostRow row)
@@ -148,7 +145,7 @@ namespace DineConnect.App.Views
                 Title = row.Title;
                 Content = row.Content;
                 foreach (var c in row.Comments)
-                    Comments.Add(c); // already lightweight rows
+                    Comments.Add(c);
             }
 
             public int Id { get; }
@@ -156,11 +153,8 @@ namespace DineConnect.App.Views
             public string UserName { get; }
             public string Title { get; }
             public string Content { get; }
-
-            // Comments are the service CommentRow(s) (no UI state per comment)
             public ObservableCollection<CommunityService.CommentRow> Comments { get; } = new();
 
-            // UI-only state for the "add comment" textbox
             private string _newCommentText = "";
             public string NewCommentText
             {

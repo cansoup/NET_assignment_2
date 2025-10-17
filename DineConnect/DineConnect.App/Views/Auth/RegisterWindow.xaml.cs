@@ -1,4 +1,6 @@
 ﻿using DineConnect.App.Services;
+using DineConnect.App.Services.Validation;
+using System.Linq;
 using System.Windows;
 
 namespace DineConnect.App.Views.Auth
@@ -17,24 +19,27 @@ namespace DineConnect.App.Views.Auth
 
         private async void RegisterButton_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(UsernameTextBox.Text)
-                || PasswordBox.Password.Length < 6
-                || PasswordBox.Password != ConfirmPasswordBox.Password)
+            var username = UsernameTextBox.Text;
+            var password = PasswordBox.Password;
+            var confirm = ConfirmPasswordBox.Password;
+
+            var validation = ValidateUser.ValidateRegistrationInput(username, password, confirm);
+
+            if (!validation.IsValid)
             {
                 MessageBox.Show(
-                    "Please ensure all fields are correct.\n- Username cannot be empty.\n- Password must be at least 6 characters.\n- Passwords must match.",
+                    string.Join("\n", validation.Errors),
                     "Validation Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
                 return;
             }
 
-            var isSuccess = await _authService.RegisterAsync(UsernameTextBox.Text, PasswordBox.Password);
+            var isSuccess = await _authService.RegisterAsync(username, password);
 
             if (isSuccess)
             {
-                // capture for caller (LoginWindow) to optionally prefill
-                RegisteredUsername = UsernameTextBox.Text;
+                RegisteredUsername = username;
 
                 MessageBox.Show("Registration successful! You can now log in.",
                                 "Success",
@@ -46,6 +51,7 @@ namespace DineConnect.App.Views.Auth
             }
             else
             {
+                // Service side currently returns false when the username already exists
                 MessageBox.Show("This username is already taken.",
                                 "Registration Failed",
                                 MessageBoxButton.OK,
