@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GMap.NET.MapProviders;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -24,36 +25,11 @@ namespace DineConnect.App.Views.Tabs
         public MapView()
         {
             InitializeComponent();
-            Loaded += MapView_Loaded;
-        }
 
-        private void MapView_Loaded(object sender, RoutedEventArgs e)
-        {
-            LoadMap();
-        }
-
-        private void LoadMap()
-        {
-            try
-            {
-                string? exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                if (exePath == null) return;
-
-                string htmlPath = Path.Combine(exePath, "map.html");
-
-                if (File.Exists(htmlPath))
-                {
-                    MapBrowser.Navigate(new Uri(htmlPath));
-                }
-                else
-                {
-                    MessageBox.Show("map.html file not found in the execution directory.", "File Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error loading map: {ex.Message}", "Map Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            MapBrowser.DragButton = MouseButton.Left;
+            MapBrowser.MapProvider = GMapProviders.GoogleMap;
+            MapBrowser.Position = new GMap.NET.PointLatLng(-33.8834, 151.2069);
+            MapBrowser.Zoom = 19;
         }
     }
 }
