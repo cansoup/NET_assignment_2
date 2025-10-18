@@ -9,5 +9,16 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
         <gmap:GMapControl x:Name="MapBrowser" MinZoom="2" MaxZoom="17"/>
+        <Border x:Name="MarkerTooltip"
+                Background="#333333" Opacity="0.9"
+                CornerRadius="5"
+                Padding="8.5"
+                HorizontalAlignment="Left" VerticalAlignment="Top"
+                Margin="10"
+                Visibility="Collapsed">
+            <TextBlock x:Name="MarkerTooltipText"
+                       Foreground="White"
+                       FontWeight="SemiBold"/>
+        </Border>
     </Grid>
 </UserControl>
