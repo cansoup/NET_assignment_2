@@ -1,4 +1,5 @@
-﻿using GMap.NET.MapProviders;
+﻿using GMap.NET;
+using GMap.NET.MapProviders;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,10 +27,24 @@ namespace DineConnect.App.Views.Tabs
         {
             InitializeComponent();
 
-            MapBrowser.DragButton = MouseButton.Left;
+            Loaded += MapView_Loaded;
+        }
+
+        private void MapView_Loaded(object sender, RoutedEventArgs e)
+        {
             MapBrowser.MapProvider = GMapProviders.GoogleMap;
+            GMaps.Instance.Mode = AccessMode.ServerAndCache;
+
+            MapBrowser.DragButton = MouseButton.Left;
+
+            MapBrowser.MouseWheelZoomType = MouseWheelZoomType.MousePositionAndCenter;
+            MapBrowser.MinZoom = 2;
+            MapBrowser.MaxZoom = 19;
+            MapBrowser.Zoom = 15;
+
             MapBrowser.Position = new GMap.NET.PointLatLng(-33.8834, 151.2069);
-            MapBrowser.Zoom = 19;
+
+            MapBrowser.ShowCenter = false;
         }
     }
 }
