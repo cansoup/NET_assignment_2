@@ -163,6 +163,7 @@ namespace DineConnect.App.Services
                 {
                     UserId = userId,
                     RestaurantId = existingRestaurant.Id,
+                    Id = existingRestaurant.Id,
                     Rating = rating
                 };
 
