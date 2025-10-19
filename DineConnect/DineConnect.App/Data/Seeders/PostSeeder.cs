@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using DineConnect.App.Models;
 using DineConnect.App.Data.Seeders;
 
+/// <summary>
+/// Seeds initial post data into the database if no posts exist.
+/// </summary>
 public class PostSeeder : ISeeder
 {
     public async Task SeedAsync(DineConnectContext db)

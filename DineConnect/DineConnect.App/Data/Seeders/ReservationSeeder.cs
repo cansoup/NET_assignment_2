@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using DineConnect.App.Models;
 using DineConnect.App.Data.Seeders;
 
+/// <summary>
+/// Seeds initial reservation data into the database if no reservations exist.
+/// </summary>
 public class ReservationSeeder : ISeeder
 {
     public async Task SeedAsync(DineConnectContext db)

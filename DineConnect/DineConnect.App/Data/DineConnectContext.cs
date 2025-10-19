@@ -1,11 +1,14 @@
 ﻿using DineConnect.App.Models;
 using Microsoft.EntityFrameworkCore;
 
+/// <summary>
+/// Represents the Entity Framework database context for the DineConnect application,
+/// defining the database sets and relationships between entities.
+/// </summary>
 public class DineConnectContext : DbContext
 {
     public DineConnectContext() { }
 
-    // Added so tests can inject a fake SQL database (like in-memory SQLite)
     public DineConnectContext(DbContextOptions<DineConnectContext> options) : base(options) { }
 
     public DbSet<Restaurant> Restaurants => Set<Restaurant>();
@@ -17,25 +20,22 @@ public class DineConnectContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)
     {
-        // Only apply default connection if no options were passed (so tests can override!)
         if (!options.IsConfigured)
         {
-            // SQLite:
-            options.UseSqlite("Data Source=dineconnect.db");
+            _ = options.UseSqlite("Data Source=dineconnect.db");
         }
     }
 
     protected override void OnModelCreating(ModelBuilder model)
     {
-        // optional: relationships, constraints, seed data, etc.
         base.OnModelCreating(model);
 
         model.Entity<Favorite>()
-            .HasKey(f => new { f.UserId, f.RestaurantId }); // Composite key
+            .HasKey(f => new { f.UserId, f.RestaurantId });
 
         model.Entity<Favorite>()
             .HasOne(f => f.User)
-            .WithMany(u => u.Favorites) 
+            .WithMany(u => u.Favorites)
             .HasForeignKey(f => f.UserId);
 
         model.Entity<Favorite>()

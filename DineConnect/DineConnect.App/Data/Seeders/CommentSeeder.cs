@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using DineConnect.App.Models;
 using DineConnect.App.Data.Seeders;
 
+/// <summary>
+/// Seeds initial comment data into the database if no comments exist.
+/// </summary>
 public class CommentSeeder : ISeeder
 {
     public async Task SeedAsync(DineConnectContext db)

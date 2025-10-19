@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using DineConnect.App.Models;
 using DineConnect.App.Data.Seeders;
 
+/// <summary>
+/// Seeds initial restaurant data into the database if no restaurants exist.
+/// </summary>
 public class RestaurantSeeder : ISeeder
 {
     public async Task SeedAsync(DineConnectContext db)

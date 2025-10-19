@@ -1,6 +1,9 @@
 ﻿using DineConnect.App.Data.Seeders;
 using Microsoft.EntityFrameworkCore;
 
+/// <summary>
+/// Seeds initial user data into the database if no users exist.
+/// </summary>
 public class UserSeeder : ISeeder
 {
     public async Task SeedAsync(DineConnectContext db)
