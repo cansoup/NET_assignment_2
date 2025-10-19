@@ -18,15 +18,11 @@ namespace DineConnect.App.Services
             _db = context ?? new DineConnectContext();
         }
 
-        /// <summary>
-        /// Ensure DB exists and seed if necessary.
-        /// </summary>
         public async Task EnsureInitializedAsync()
         {
             await DbSeed.EnsureCreatedAndSeedAsync(_db);
         }
 
-        // Lightweight row types returned to the View. No UI state here.
         public sealed class CommentRow
         {
             public int Id { get; init; }
@@ -55,9 +51,6 @@ namespace DineConnect.App.Services
             public List<CommentRow> Comments { get; init; } = new();
         }
 
-        /// <summary>
-        /// Returns the full feed (latest first), with comments for each post.
-        /// </summary>
         public async Task<List<PostRow>> GetFeedAsync(CancellationToken ct = default)
         {
             // Users map for usernames
@@ -107,7 +100,6 @@ namespace DineConnect.App.Services
 
         public async Task<CreatePostResult> CreatePostAsync(int userId, string title, string content, CancellationToken ct = default)
         {
-            // simple validation
             if (string.IsNullOrWhiteSpace(title)) return new(false, "Title is required.", null);
             if (string.IsNullOrWhiteSpace(content)) return new(false, "Content is required.", null);
 
@@ -123,7 +115,6 @@ namespace DineConnect.App.Services
                 await _db.Posts.AddAsync(entity, ct);
                 await _db.SaveChangesAsync(ct);
 
-                // Materialize PostRow for the just-created item
                 var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, ct);
                 var userName = user?.UserName ?? "unknown";
 

@@ -3,6 +3,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DineConnect.App.Util
 {
+    /// <summary>
+    /// Provides utility methods for generating the next unique integer IDs for various entities
+    /// (User, Restaurant, Post, Comment, Reservation) in the DineConnect database.
+    /// </summary>
     public static class IdGenerator
     {
         public static async Task<int> GetNextUserIdAsync(DineConnectContext db)

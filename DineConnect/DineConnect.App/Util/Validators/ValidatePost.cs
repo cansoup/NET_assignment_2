@@ -2,6 +2,9 @@
 
 namespace DineConnect.App.Services.Validation
 {
+    /// <summary>
+    /// Provides validation logic for user posts, including title and content checks.
+    /// </summary>
     public static class ValidatePost
     {
         private const int MinTitleLength = 5;
@@ -23,7 +26,6 @@ namespace DineConnect.App.Services.Validation
                 var t = title.Trim();
                 if (t.Length < MinTitleLength || t.Length > MaxTitleLength)
                     result.AddError($"Title must be {MinTitleLength}-{MaxTitleLength} characters.");
-                // optional: forbid only-whitespace or emoji-only titles, etc.
                 if (!Regex.IsMatch(t, @"\S"))
                     result.AddError("Title cannot be only whitespace.");
             }

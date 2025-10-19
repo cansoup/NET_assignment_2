@@ -1,8 +1,10 @@
 ﻿namespace DineConnect.App.Services.Validation
 {
+    /// <summary>
+    /// Provides validation logic for user comments, including length and content checks.
+    /// </summary>
     public static class ValidateComment
     {
-        // tweak as desired
         private const int MinCommentLength = 3;
         private const int MaxCommentLength = 250;
 

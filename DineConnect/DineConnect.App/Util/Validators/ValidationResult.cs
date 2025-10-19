@@ -1,5 +1,8 @@
 ﻿namespace DineConnect.App.Services.Validation
 {
+    /// <summary>
+    /// Represents the result of a validation operation, including validity and error messages.
+    /// </summary>
     public sealed class ValidationResult
     {
         private readonly List<string> _errors = new();

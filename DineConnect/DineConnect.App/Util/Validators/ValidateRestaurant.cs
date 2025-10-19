@@ -1,5 +1,8 @@
 ﻿namespace DineConnect.App.Services.Validation
 {
+    /// <summary>
+    /// Provides validation logic for restaurant data, including name and address checks.
+    /// </summary>
     public static class ValidateRestaurant
     {
         private const int MinNameLength = 2;
@@ -10,7 +13,7 @@
         {
             var result = new ValidationResult();
 
-            // Name (required)
+            // Name
             if (string.IsNullOrWhiteSpace(name))
             {
                 result.AddError("Restaurant name is required.");
@@ -24,7 +27,7 @@
                     result.AddError($"Name must not exceed {MaxNameLength} characters.");
             }
 
-            // Address (optional but bounded)
+            // Address
             if (!string.IsNullOrWhiteSpace(address))
             {
                 var a = address.Trim();

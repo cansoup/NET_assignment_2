@@ -1,5 +1,8 @@
 ﻿namespace DineConnect.App.Services.Validation
 {
+    /// <summary>
+    /// Provides validation logic for restaurant ratings.
+    /// </summary>
     public static class ValidateRating
     {
         private const int MinRating = 1;
