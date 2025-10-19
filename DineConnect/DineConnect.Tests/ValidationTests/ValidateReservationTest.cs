@@ -7,6 +7,9 @@ namespace DineConnect.Tests.Validation
     [TestFixture]
     public class ValidateReservationTests
     {
+        /// <summary>
+        /// Ensures validation fails and returns all relevant errors when all inputs are invalid.
+        /// </summary>
         [Test]
         public void ValidateCreate_ShouldReturnErrors_WhenAllInputsAreInvalid()
         {
@@ -19,6 +22,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Party size must be between 1 and 12."));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the restaurant ID is invalid.
+        /// </summary>
         [Test]
         public void ValidateCreate_ShouldReturnError_WhenRestaurantIdIsInvalid()
         {
@@ -29,6 +35,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("A restaurant must be selected."));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the date is null or in the past.
+        /// </summary>
         [Test]
         public void ValidateCreate_ShouldReturnError_WhenDateIsNullOrPast()
         {
@@ -42,6 +51,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(resultWithPastDate.Errors, Does.Contain("Please select a valid future date & time."));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the party size is invalid (null, zero, negative, or above max).
+        /// </summary>
         [TestCase(null)]
         [TestCase(0)]
         [TestCase(13)]
@@ -55,6 +67,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Party size must be between 1 and 12."));
         }
 
+        /// <summary>
+        /// Ensures validation passes when all inputs are valid.
+        /// </summary>
         [Test]
         public void ValidateCreate_ShouldPass_WhenAllInputsAreValid()
         {
@@ -65,6 +80,9 @@ namespace DineConnect.Tests.Validation
             Assert.IsEmpty(result.Errors);
         }
 
+        /// <summary>
+        /// Ensures validation passes when party size is at the minimum boundary.
+        /// </summary>
         [Test]
         public void ValidateCreate_ShouldPass_WhenPartySizeIsAtMinBoundary()
         {
@@ -75,6 +93,9 @@ namespace DineConnect.Tests.Validation
             Assert.IsEmpty(result.Errors);
         }
 
+        /// <summary>
+        /// Ensures validation passes when party size is at the maximum boundary.
+        /// </summary>
         [Test]
         public void ValidateCreate_ShouldPass_WhenPartySizeIsAtMaxBoundary()
         {

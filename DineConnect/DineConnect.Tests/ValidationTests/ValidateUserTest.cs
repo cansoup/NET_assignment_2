@@ -9,6 +9,9 @@ namespace DineConnect.Tests.Validation
     {
         // === LOGIN TESTS ===
 
+        /// <summary>
+        /// Ensures validation fails when the username is missing during login.
+        /// </summary>
         [Test]
         public void ValidateLoginInput_ShouldReturnError_WhenUsernameIsMissing()
         {
@@ -18,6 +21,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Username is required."));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the password is missing during login.
+        /// </summary>
         [Test]
         public void ValidateLoginInput_ShouldReturnError_WhenPasswordIsMissing()
         {
@@ -27,6 +33,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Password is required."));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the username format is invalid during login.
+        /// </summary>
         [Test]
         public void ValidateLoginInput_ShouldReturnError_WhenUsernameFormatIsInvalid()
         {
@@ -36,6 +45,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Username may contain letters, numbers, dots, underscores, and dashes only."));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the password hash does not match during login.
+        /// </summary>
         [Test]
         public void ValidateLoginInput_ShouldReturnError_WhenPasswordHashDoesNotMatch()
         {
@@ -48,6 +60,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Invalid username or password."));
         }
 
+        /// <summary>
+        /// Ensures validation passes when the password hash matches during login.
+        /// </summary>
         [Test]
         public void ValidateLoginInput_ShouldPass_WhenHashMatches()
         {
@@ -61,6 +76,9 @@ namespace DineConnect.Tests.Validation
 
         // === REGISTRATION TESTS (username/password only) ===
 
+        /// <summary>
+        /// Ensures validation fails when the username is invalid during registration.
+        /// </summary>
         [Test]
         public void ValidateRegistrationInput_ShouldReturnError_WhenUsernameIsInvalid()
         {
@@ -70,6 +88,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Username must be 3-32 characters."));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the password is too short during registration.
+        /// </summary>
         [Test]
         public void ValidateRegistrationInput_ShouldReturnError_WhenPasswordIsTooShort()
         {
@@ -79,6 +100,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Password must be at least 8 characters."));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the password lacks a lowercase letter during registration.
+        /// </summary>
         [Test]
         public void ValidateRegistrationInput_ShouldReturnError_WhenPasswordLacksLowercase()
         {
@@ -88,6 +112,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Password must contain a lowercase letter."));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the password lacks an uppercase letter during registration.
+        /// </summary>
         [Test]
         public void ValidateRegistrationInput_ShouldReturnError_WhenPasswordLacksUppercase()
         {
@@ -97,6 +124,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Password must contain an uppercase letter."));
         }
 
+        /// <summary>
+        /// Ensures validation passes when both username and password are valid during registration.
+        /// </summary>
         [Test]
         public void ValidateRegistrationInput_ShouldPass_WhenUsernameAndPasswordAreValid()
         {
@@ -107,6 +137,9 @@ namespace DineConnect.Tests.Validation
 
         // === REGISTRATION WITH CONFIRM PASSWORD ===
 
+        /// <summary>
+        /// Ensures validation fails when the passwords do not match during registration.
+        /// </summary>
         [Test]
         public void ValidateRegistrationInput_ShouldReturnError_WhenPasswordsDoNotMatch()
         {
@@ -116,6 +149,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Passwords must match."));
         }
 
+        /// <summary>
+        /// Ensures validation passes when the passwords match during registration.
+        /// </summary>
         [Test]
         public void ValidateRegistrationInput_ShouldPass_WhenPasswordsMatch()
         {

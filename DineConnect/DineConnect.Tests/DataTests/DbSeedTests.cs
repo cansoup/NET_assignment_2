@@ -6,13 +6,16 @@ using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 
 using DineConnect.App.Data;
-using DineConnect.App.Models; 
+using DineConnect.App.Models;
 
 namespace DineConnect.Tests
 {
     // Reusable helpers for all fixtures
     internal static class TestDb
     {
+        /// <summary>
+        /// Creates an in-memory SQLite database context for testing.
+        /// </summary>
         public static (DineConnectContext Ctx, SqliteConnection Conn) CreateInMemory()
         {
             var conn = new SqliteConnection("DataSource=:memory:");
@@ -28,6 +31,9 @@ namespace DineConnect.Tests
             return (ctx, conn);
         }
 
+        /// <summary>
+        /// Creates and seeds an in-memory database context for testing.
+        /// </summary>
         public static async Task<(DineConnectContext Ctx, SqliteConnection Conn)> CreateAndSeedAsync()
         {
             var (ctx, conn) = CreateInMemory();
@@ -40,6 +46,9 @@ namespace DineConnect.Tests
     [TestFixture]
     public class UserTests
     {
+        /// <summary>
+        /// Ensures that two users are seeded with expected fields and unique usernames.
+        /// </summary>
         [Test]
         public async Task Seeds_TwoUsers_WithExpectedFields_AndUniqueUserNames()
         {
@@ -64,6 +73,9 @@ namespace DineConnect.Tests
             finally { ctx.Dispose(); conn.Dispose(); }
         }
 
+        /// <summary>
+        /// Ensures that seeding users twice does not create duplicates (idempotency).
+        /// </summary>
         [Test]
         public async Task Idempotent_WhenSeedingUsersTwice_DoesNotDuplicate()
         {
@@ -82,6 +94,9 @@ namespace DineConnect.Tests
     [TestFixture]
     public class RestaurantTests
     {
+        /// <summary>
+        /// Ensures that two restaurants are seeded with valid geo and contact information.
+        /// </summary>
         [Test]
         public async Task Seeds_TwoRestaurants_WithValidGeoAndContact()
         {
@@ -108,6 +123,9 @@ namespace DineConnect.Tests
             finally { ctx.Dispose(); conn.Dispose(); }
         }
 
+        /// <summary>
+        /// Ensures that seeding restaurants twice does not create duplicates (idempotency).
+        /// </summary>
         [Test]
         public async Task Idempotent_WhenSeedingRestaurantsTwice_DoesNotDuplicate()
         {
@@ -126,6 +144,9 @@ namespace DineConnect.Tests
     [TestFixture]
     public class PostTests
     {
+        /// <summary>
+        /// Ensures that two posts are seeded with expected titles and valid user links.
+        /// </summary>
         [Test]
         public async Task Seeds_TwoPosts_WithExpectedTitles_AndValidUserLinks()
         {
@@ -154,6 +175,9 @@ namespace DineConnect.Tests
             finally { ctx.Dispose(); conn.Dispose(); }
         }
 
+        /// <summary>
+        /// Ensures that querying posts by user ID returns only that user's posts.
+        /// </summary>
         [Test]
         public async Task Query_ByUserId_ReturnsOnlyThatUsersPosts()
         {
@@ -172,6 +196,9 @@ namespace DineConnect.Tests
     [TestFixture]
     public class CommentTests
     {
+        /// <summary>
+        /// Ensures that two comments are seeded with valid post and user links.
+        /// </summary>
         [Test]
         public async Task Seeds_TwoComments_WithValidPostAndUserLinks()
         {
@@ -197,6 +224,9 @@ namespace DineConnect.Tests
             finally { ctx.Dispose(); conn.Dispose(); }
         }
 
+        /// <summary>
+        /// Ensures that querying comments for a post returns the expected items.
+        /// </summary>
         [Test]
         public async Task Query_CommentsForPost_ReturnsExpectedItems()
         {
