@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DineConnect.App.Util;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,7 @@ namespace DineConnect.App.Models
     /// <summary>
     /// Represents a user of the DineConnect application.
     /// </summary>
-    public class User
+    public class User : IIdentifiable
     {
         public int Id { get; set; }
         public string UserName { get; set; }

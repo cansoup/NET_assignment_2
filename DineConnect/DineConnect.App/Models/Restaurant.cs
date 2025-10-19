@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using DineConnect.App.Util;
+using System.Collections.Generic;
 
 namespace DineConnect.App.Models
 {
     /// <summary>
     /// Represents a restaurant, including its location, contact information, and related reservations and favorites.
     /// </summary>
-    public class Restaurant
+    public class Restaurant : IIdentifiable
     {
         public int Id { get; set; }
         public string Name { get; set; } = "";

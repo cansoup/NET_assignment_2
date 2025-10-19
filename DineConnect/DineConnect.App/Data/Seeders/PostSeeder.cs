@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using DineConnect.App.Models;
 using DineConnect.App.Data.Seeders;
+using DineConnect.App.Util;
 
 /// <summary>
 /// Seeds initial post data into the database if no posts exist.
@@ -12,17 +13,20 @@ public class PostSeeder : ISeeder
     {
         if (!await db.Posts.AnyAsync())
         {
+            var postId1 = await IdGenerator.GetNextPostId(db);
+            var postId2 = postId1 + 1;
+
             db.Posts.AddRange(
                 new Post
                 {
-                    Id = 30000001,
+                    Id = postId1,
                     UserId = 10000001,
                     Title = "Amazing Seafood!",
                     Content = "Had a great time at Ocean View Grill!"
                 },
                 new Post
                 {
-                    Id = 30000002,
+                    Id = postId2,
                     UserId = 10000002,
                     Title = "Love this place",
                     Content = "Mountain Top Diner has the coziest vibe!"

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DineConnect.App.Util;
+using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DineConnect.App.Models
@@ -11,7 +12,7 @@ namespace DineConnect.App.Models
     /// <summary>
     /// Represents a reservation made by a user at a restaurant, including date, party size, and status.
     /// </summary>
-    public class Reservation
+    public class Reservation : IIdentifiable
     {
         public int Id { get; set; }
         public int RestaurantId { get; set; }

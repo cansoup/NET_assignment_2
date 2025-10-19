@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using DineConnect.App.Models;
 using DineConnect.App.Data.Seeders;
+using DineConnect.App.Util;
 
 /// <summary>
 /// Seeds initial restaurant data into the database if no restaurants exist.
@@ -12,10 +13,13 @@ public class RestaurantSeeder : ISeeder
     {
         if (!await db.Restaurants.AnyAsync())
         {
+            var restaurantId1 = await IdGenerator.GetNextRestaurantId(db);
+            var restaurantId2 = restaurantId1 + 1;
+
             db.Restaurants.AddRange(
                 new Restaurant
                 {
-                    Id = 20000001,
+                    Id = restaurantId1,
                     Name = "Ocean View Grill",
                     Address = "123 Beach Ave",
                     Lat = 35.556,
@@ -24,7 +28,7 @@ public class RestaurantSeeder : ISeeder
                 },
                 new Restaurant
                 {
-                    Id = 20000002,
+                    Id = restaurantId2,
                     Name = "Mountain Top Diner",
                     Address = "789 Hill Road",
                     Lat = 40.123,

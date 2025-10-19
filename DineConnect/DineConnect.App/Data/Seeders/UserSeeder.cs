@@ -1,4 +1,5 @@
 ﻿using DineConnect.App.Data.Seeders;
+using DineConnect.App.Util;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -10,12 +11,15 @@ public class UserSeeder : ISeeder
     {
         if (!await db.Users.AnyAsync())
         {
+            var aliceId = await IdGenerator.GetNextUserId(db);
+            var bobId = aliceId + 1;
+
             var aliceHash = BCrypt.Net.BCrypt.HashPassword("hash123");
             var bobHash = BCrypt.Net.BCrypt.HashPassword("hash456");
 
             db.Users.AddRange(
-                new DineConnect.App.Models.User { Id = 10000001, UserName = "alice", PasswordHash = aliceHash },
-                new DineConnect.App.Models.User { Id = 10000002, UserName = "bob", PasswordHash = bobHash }
+                new DineConnect.App.Models.User { Id = aliceId, UserName = "alice", PasswordHash = aliceHash },
+                new DineConnect.App.Models.User { Id = bobId, UserName = "bob", PasswordHash = bobHash }
             );
 
             await db.SaveChangesAsync();
