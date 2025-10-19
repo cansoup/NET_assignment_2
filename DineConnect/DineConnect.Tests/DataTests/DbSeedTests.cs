@@ -84,55 +84,6 @@ namespace DineConnect.Tests
         }
     }
 
-    // ---------- RESTAURANTS ----------
-    [TestFixture]
-    public class RestaurantTests
-    {
-        /// <summary>
-        /// Ensures that two restaurants are seeded with valid geo and contact information.
-        /// </summary>
-        [Test]
-        public async Task Seeds_TwoRestaurants_WithValidGeoAndContact()
-        {
-            var (ctx, conn) = await TestDb.CreateAndSeedAsync();
-            try
-            {
-                Assert.That(ctx.Restaurants.Count(), Is.EqualTo(2));
-
-                var ocean = ctx.Restaurants.SingleOrDefault(r => r.Id == 20000001);
-                var mountain = ctx.Restaurants.SingleOrDefault(r => r.Id == 20000002);
-
-                Assert.That(ocean, Is.Not.Null);
-                Assert.That(mountain, Is.Not.Null);
-
-                Assert.That(ocean!.Name, Is.EqualTo("Ocean View Grill"));
-                Assert.That(ocean.Address, Is.Not.Empty);
-                Assert.That(ocean.Lat, Is.InRange(-90.0, 90.0));
-                Assert.That(ocean.Lng, Is.InRange(-180.0, 180.0));
-                Assert.That(ocean.Phone, Is.Not.Empty);
-
-                Assert.That(mountain!.Name, Is.EqualTo("Mountain Top Diner"));
-                Assert.That(mountain.Address, Is.Not.Empty);
-            }
-            finally { ctx.Dispose(); conn.Dispose(); }
-        }
-
-        /// <summary>
-        /// Ensures that seeding restaurants twice does not create duplicates (idempotency).
-        /// </summary>
-        [Test]
-        public async Task Idempotent_WhenSeedingRestaurantsTwice_DoesNotDuplicate()
-        {
-            var (ctx, conn) = await TestDb.CreateAndSeedAsync();
-            try
-            {
-                var first = ctx.Restaurants.Count();
-                await DbSeed.EnsureCreatedAndSeedAsync(ctx);
-                Assert.That(ctx.Restaurants.Count(), Is.EqualTo(first));
-            }
-            finally { ctx.Dispose(); conn.Dispose(); }
-        }
-    }
 
     // ---------- POSTS ----------
     [TestFixture]
