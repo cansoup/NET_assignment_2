@@ -66,6 +66,8 @@ namespace DineConnect.App.Views.Tabs
                 foreach(var row in favoriteRows)
                 {
                     var marker = new GMap.NET.WindowsPresentation.GMapMarker(new PointLatLng(row.Restaurant.Lat, row.Restaurant.Lng));
+                    string ratingStars = new string('★', row.Rating) + new string('☆', 5 - row.Rating);
+
                     var shape = new Ellipse
                     {
                         Width = 12,
@@ -73,7 +75,7 @@ namespace DineConnect.App.Views.Tabs
                         Stroke = Brushes.White,
                         StrokeThickness = 2,
                         Fill = Brushes.Red,
-                        Tag = $"{row.Restaurant.Name}\n{row.Restaurant.Address}"
+                        Tag = $"{row.Restaurant.Name}\n{row.Restaurant.Address}\n{ratingStars}"
                     };
 
                     shape.MouseEnter += Marker_MouseEnter;
