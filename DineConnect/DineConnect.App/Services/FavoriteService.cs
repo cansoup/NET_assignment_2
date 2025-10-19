@@ -38,6 +38,8 @@ namespace DineConnect.App.Services
         {
             public string Name { get; init; } = "";
             public string Address { get; init; } = "";
+            public double Lat { get; set; }
+            public double Lng { get; set; }
         }
 
         public sealed class FavoriteRow
@@ -54,7 +56,9 @@ namespace DineConnect.App.Services
                 Restaurant = new RestaurantDto
                 {
                     Name = f.Restaurant?.Name ?? "",
-                    Address = f.Restaurant?.Address ?? ""
+                    Address = f.Restaurant?.Address ?? "",
+                    Lat = f.Restaurant?.Lat ?? 0,
+                    Lng = f.Restaurant?.Lng ?? 0,   
                 },
                 Rating = f.Rating
             };
@@ -121,6 +125,7 @@ namespace DineConnect.App.Services
             restaurantName = (restaurantName ?? "").Trim();
             restaurantAddress = (restaurantAddress ?? "").Trim();
 
+
             if (string.IsNullOrWhiteSpace(restaurantName))
                 return new(false, "Restaurant name is required.", null);
 
@@ -138,7 +143,9 @@ namespace DineConnect.App.Services
                     existingRestaurant = new Restaurant
                     {
                         Name = restaurantName,
-                        Address = restaurantAddress
+                        Address = restaurantAddress,
+                        Lat = 0,
+                        Lng = 0,
                     };
                     await _db.Restaurants.AddAsync(existingRestaurant, ct);
                     await _db.SaveChangesAsync(ct);
@@ -170,7 +177,9 @@ namespace DineConnect.App.Services
                     Restaurant = new RestaurantDto
                     {
                         Name = existingRestaurant.Name,
-                        Address = existingRestaurant.Address ?? ""
+                        Address = existingRestaurant.Address ?? "",
+                        Lat = existingRestaurant.Lat,
+                        Lng = existingRestaurant.Lng,
                     },
                     Rating = favorite.Rating
                 };

@@ -11,6 +11,9 @@
     <Compile Update="Views\Tabs\CommunityView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Views\Tabs\MapView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Views\Tabs\MyFavoritesView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -1,4 +1,5 @@
 ﻿using DineConnect.App.Views;
+using DineConnect.App.Views.Tabs;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -36,9 +37,12 @@ namespace DineConnect.App
                 case "ReservationsButton":
                     MainFrame.Navigate(new ReservationsView());
                     break;
-                 case "CommunityPicksButton":
-                   MainFrame.Navigate(new CommunityView());
-                  break;
+                case "CommunityPicksButton":
+                    MainFrame.Navigate(new CommunityView());
+                    break;
+                case "MapViewButton":
+                    MainFrame.Navigate(new MapView());
+                    break;
             }
         }
     }

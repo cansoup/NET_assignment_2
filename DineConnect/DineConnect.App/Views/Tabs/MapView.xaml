@@ -1,0 +1,24 @@
+﻿<UserControl x:Class="DineConnect.App.Views.Tabs.MapView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:DineConnect.App.Views.Tabs"
+             xmlns:gmap="clr-namespace:GMap.NET.WindowsPresentation;assembly=GMap.NET.WindowsPresentation"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <gmap:GMapControl x:Name="MapBrowser" MinZoom="2" MaxZoom="17"/>
+        <Border x:Name="MarkerTooltip"
+                Background="#333333" Opacity="0.9"
+                CornerRadius="5"
+                Padding="8.5"
+                HorizontalAlignment="Left" VerticalAlignment="Top"
+                Margin="10"
+                Visibility="Collapsed">
+            <TextBlock x:Name="MarkerTooltipText"
+                       Foreground="White"
+                       FontWeight="SemiBold"/>
+        </Border>
+    </Grid>
+</UserControl>
