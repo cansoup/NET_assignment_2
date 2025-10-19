@@ -9,6 +9,9 @@ using System.Windows.Threading;
 
 namespace DineConnect.App.Views
 {
+    /// <summary>
+    /// Manages the user's favorite restaurants, including searching, adding, and deleting favorites.
+    /// </summary>
     public partial class MyFavoritesView : UserControl
     {
         private readonly FavoriteService _favoriteService;

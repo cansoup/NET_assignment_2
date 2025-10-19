@@ -9,6 +9,9 @@ using System.Windows.Controls;
 
 namespace DineConnect.App.Views
 {
+    /// <summary>
+    /// Displays the community feed, allowing users to view posts, publish new posts, and add comments.
+    /// </summary>
     public partial class CommunityView : UserControl
     {
         private readonly CommunityService _service;
@@ -32,7 +35,7 @@ namespace DineConnect.App.Views
                 await LoadFeedAsync();
 
                 _isLoaded = true;
-                ValidatePostForm(); // now uses shared validator
+                ValidatePostForm();
             }
             catch (Exception ex)
             {
@@ -56,7 +59,6 @@ namespace DineConnect.App.Views
             RightStatusText.Text = _feed.Count == 0 ? "No posts yet — be the first to post!" : "";
         }
 
-        // ✅ View calls shared validation to control UI state
         private void ValidatePostForm()
         {
             var title = (PostTitleText?.Text ?? string.Empty).Trim();
@@ -75,7 +77,6 @@ namespace DineConnect.App.Views
             var title = (PostTitleText.Text ?? string.Empty).Trim();
             var content = (PostContentText.Text ?? string.Empty).Trim();
 
-            // ✅ Validate before service call (no inline checks)
             var v = ValidatePost.ValidateCreateInput(title, content);
             if (!v.IsValid)
             {
@@ -110,7 +111,6 @@ namespace DineConnect.App.Views
 
             var text = (post.NewCommentText ?? string.Empty).Trim();
 
-            // ✅ Validate comment via shared validator
             var v = ValidateComment.ValidateCreateInput(text);
             if (!v.IsValid)
             {

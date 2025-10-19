@@ -12,7 +12,7 @@ using GMap.NET.WindowsForms;
 namespace DineConnect.App.Views.Tabs
 {
     /// <summary>
-    /// MapView.xaml에 대한 상호 작용 논리
+    /// Displays a map with markers for the user's favorite restaurants using GMap.NET.
     /// </summary>
     public partial class MapView : UserControl
     {
@@ -47,7 +47,7 @@ namespace DineConnect.App.Views.Tabs
 
         private async Task LoadFavoriteMarkersAsync()
         {
-            if(AppState.CurrentUser == null)
+            if (AppState.CurrentUser == null)
             {
                 return;
             }
@@ -58,12 +58,12 @@ namespace DineConnect.App.Views.Tabs
             {
                 var favoriteRows = await _favoriteService.GetFavoritesForUserAsync(AppState.CurrentUser.Id);
 
-                if(!favoriteRows.Any())
+                if (!favoriteRows.Any())
                 {
                     return;
                 }
 
-                foreach(var row in favoriteRows)
+                foreach (var row in favoriteRows)
                 {
                     var marker = new GMap.NET.WindowsPresentation.GMapMarker(new PointLatLng(row.Restaurant.Lat, row.Restaurant.Lng));
                     var shape = new Ellipse
@@ -83,7 +83,7 @@ namespace DineConnect.App.Views.Tabs
                     MapBrowser.Markers.Add(marker);
                 }
             }
-            catch( Exception ex )
+            catch (Exception ex)
             {
                 MessageBox.Show($"Error loading favorite markers: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -91,7 +91,7 @@ namespace DineConnect.App.Views.Tabs
 
         private void Marker_MouseEnter(object sender, MouseEventArgs e)
         {
-            if(sender is FrameworkElement shape && shape.Tag is string info)
+            if (sender is FrameworkElement shape && shape.Tag is string info)
             {
                 Point mousePosition = e.GetPosition(this);
 
