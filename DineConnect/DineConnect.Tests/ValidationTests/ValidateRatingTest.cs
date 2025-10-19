@@ -1,11 +1,13 @@
-﻿using NUnit.Framework;
-using DineConnect.App.Services.Validation;
+﻿using DineConnect.App.Services.Validation;
 
 namespace DineConnect.Tests.Validation
 {
     [TestFixture]
     public class ValidateRatingTests
     {
+        /// <summary>
+        /// Ensures validation fails and returns an error when the rating is out of the allowed range.
+        /// </summary>
         [TestCase(0)]
         [TestCase(-1)]
         [TestCase(6)]
@@ -18,6 +20,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors[0], Does.Contain("Rating must be between"));
         }
 
+        /// <summary>
+        /// Ensures validation passes when the rating is within the valid range.
+        /// </summary>
         [TestCase(1)]
         [TestCase(3)]
         [TestCase(5)]
@@ -29,6 +34,9 @@ namespace DineConnect.Tests.Validation
             Assert.IsEmpty(result.Errors);
         }
 
+        /// <summary>
+        /// Ensures validation fails when the rating is exactly below the minimum allowed value.
+        /// </summary>
         [Test]
         public void Validate_ShouldReturnError_WhenRatingIsExactlyBelowMin()
         {
@@ -38,6 +46,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors[0], Does.Contain("Rating must be between"));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the rating is exactly above the maximum allowed value.
+        /// </summary>
         [Test]
         public void Validate_ShouldReturnError_WhenRatingIsExactlyAboveMax()
         {
@@ -47,6 +58,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors[0], Does.Contain("Rating must be between"));
         }
 
+        /// <summary>
+        /// Ensures validation passes when the rating is exactly at the minimum allowed value.
+        /// </summary>
         [Test]
         public void Validate_ShouldPass_WhenRatingIsExactlyMin()
         {
@@ -55,6 +69,9 @@ namespace DineConnect.Tests.Validation
             Assert.IsTrue(result.IsValid);
         }
 
+        /// <summary>
+        /// Ensures validation passes when the rating is exactly at the maximum allowed value.
+        /// </summary>
         [Test]
         public void Validate_ShouldPass_WhenRatingIsExactlyMax()
         {

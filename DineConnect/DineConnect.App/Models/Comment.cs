@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DineConnect.App.Util;
 
 namespace DineConnect.App.Models
 {
-    public class Comment
+    /// <summary>
+    /// Represents a comment made by a user on a post in the community feed.
+    /// </summary>
+    public class Comment : IIdentifiable
     {
         public int Id { get; set; }
         public int UserId { get; set; }

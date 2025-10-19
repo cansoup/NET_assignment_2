@@ -1,11 +1,13 @@
-﻿using NUnit.Framework;
-using DineConnect.App.Services.Validation;
+﻿using DineConnect.App.Services.Validation;
 
 namespace DineConnect.Tests.Validation
 {
     [TestFixture]
     public class ValidateRestaurantTests
     {
+        /// <summary>
+        /// Ensures validation fails when the restaurant name is null or whitespace.
+        /// </summary>
         [Test]
         public void ValidateUpsert_ShouldReturnError_WhenNameIsNullOrWhitespace()
         {
@@ -19,6 +21,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(resultWhitespace.Errors, Does.Contain("Restaurant name is required."));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the restaurant name is shorter than the minimum allowed length.
+        /// </summary>
         [Test]
         public void ValidateUpsert_ShouldReturnError_WhenNameIsTooShort()
         {
@@ -28,6 +33,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Name must be at least 2 characters."));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the restaurant name exceeds the maximum allowed length.
+        /// </summary>
         [Test]
         public void ValidateUpsert_ShouldReturnError_WhenNameIsTooLong()
         {
@@ -38,6 +46,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Name must not exceed 120 characters."));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the address exceeds the maximum allowed length.
+        /// </summary>
         [Test]
         public void ValidateUpsert_ShouldReturnError_WhenAddressIsTooLong()
         {
@@ -48,6 +59,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Address must not exceed 200 characters."));
         }
 
+        /// <summary>
+        /// Ensures validation passes when the name is valid and the address is null.
+        /// </summary>
         [Test]
         public void ValidateUpsert_ShouldPass_WhenNameIsValidAndAddressIsNull()
         {
@@ -57,6 +71,9 @@ namespace DineConnect.Tests.Validation
             Assert.IsEmpty(result.Errors);
         }
 
+        /// <summary>
+        /// Ensures validation passes when both name and address are valid.
+        /// </summary>
         [Test]
         public void ValidateUpsert_ShouldPass_WhenNameAndAddressAreValid()
         {
@@ -66,6 +83,9 @@ namespace DineConnect.Tests.Validation
             Assert.IsEmpty(result.Errors);
         }
 
+        /// <summary>
+        /// Ensures validation passes when the name is valid and the address is empty.
+        /// </summary>
         [Test]
         public void ValidateUpsert_ShouldAcceptEmptyAddressWhenNameIsValid()
         {
@@ -75,6 +95,9 @@ namespace DineConnect.Tests.Validation
             Assert.IsEmpty(result.Errors);
         }
 
+        /// <summary>
+        /// Ensures validation passes when the name is exactly at the minimum allowed length.
+        /// </summary>
         [Test]
         public void ValidateUpsert_ShouldPass_WhenNameIsAtBoundaryMinLength()
         {
@@ -84,6 +107,9 @@ namespace DineConnect.Tests.Validation
             Assert.IsEmpty(result.Errors);
         }
 
+        /// <summary>
+        /// Ensures validation passes when the name is exactly at the maximum allowed length.
+        /// </summary>
         [Test]
         public void ValidateUpsert_ShouldPass_WhenNameIsAtBoundaryMaxLength()
         {
@@ -94,6 +120,9 @@ namespace DineConnect.Tests.Validation
             Assert.IsEmpty(result.Errors);
         }
 
+        /// <summary>
+        /// Ensures validation passes when the address is exactly at the maximum allowed length.
+        /// </summary>
         [Test]
         public void ValidateUpsert_ShouldPass_WhenAddressIsAtBoundaryMaxLength()
         {

@@ -1,14 +1,14 @@
 ﻿using DineConnect.App.Services;
 using DineConnect.App.Services.Validation;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
 namespace DineConnect.App.Views
 {
+    /// <summary>
+    /// Manages the user's favorite restaurants, including searching, adding, and deleting favorites.
+    /// </summary>
     public partial class MyFavoritesView : UserControl
     {
         private readonly FavoriteService _favoriteService;

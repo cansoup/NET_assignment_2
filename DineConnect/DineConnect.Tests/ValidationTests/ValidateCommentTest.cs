@@ -1,11 +1,13 @@
-﻿using NUnit.Framework;
-using DineConnect.App.Services.Validation;
+﻿using DineConnect.App.Services.Validation;
 
 namespace DineConnect.Tests.Validation
 {
     [TestFixture]
     public class ValidateCommentTests
     {
+        /// <summary>
+        /// Ensures that validation fails and returns an error when the comment text is null.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldReturnError_WhenTextIsNull()
         {
@@ -15,6 +17,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Comment cannot be empty."));
         }
 
+        /// <summary>
+        /// Ensures that validation fails and returns an error when the comment text is empty.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldReturnError_WhenTextIsEmpty()
         {
@@ -24,6 +29,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Comment cannot be empty."));
         }
 
+        /// <summary>
+        /// Ensures that validation fails and returns an error when the comment text is only whitespace.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldReturnError_WhenTextIsWhitespace()
         {
@@ -33,6 +41,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Comment cannot be empty."));
         }
 
+        /// <summary>
+        /// Ensures that validation fails and returns an error when the comment text is too short after trimming.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldReturnError_WhenTextIsTooShort()
         {
@@ -42,6 +53,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors[0], Does.Contain("Comment must be"));
         }
 
+        /// <summary>
+        /// Ensures that validation fails and returns an error when the comment text exceeds the maximum allowed length.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldReturnError_WhenTextIsTooLong()
         {
@@ -52,6 +66,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors[0], Does.Contain("Comment must be"));
         }
 
+        /// <summary>
+        /// Ensures that validation passes when the comment text is within the valid length range.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldPass_WhenTextIsWithinValidRange()
         {
@@ -61,6 +78,9 @@ namespace DineConnect.Tests.Validation
             Assert.IsEmpty(result.Errors);
         }
 
+        /// <summary>
+        /// Ensures that validation trims the comment text before checking its validity.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldTrimTextBeforeValidation()
         {
@@ -70,6 +90,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors[0], Does.Contain("Comment must be"));
         }
 
+        /// <summary>
+        /// Ensures that validation passes when the comment text is exactly the minimum allowed length.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldPass_WhenTextIsExactlyMinLength()
         {
@@ -79,6 +102,9 @@ namespace DineConnect.Tests.Validation
             Assert.IsEmpty(result.Errors);
         }
 
+        /// <summary>
+        /// Ensures that validation passes when the comment text is exactly the maximum allowed length.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldPass_WhenTextIsExactlyMaxLength()
         {

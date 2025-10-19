@@ -7,6 +7,9 @@ using System.Windows.Controls;
 
 namespace DineConnect.App.Views
 {
+    /// <summary>
+    /// Handles restaurant reservations, enabling users to book, view, filter, and delete reservations.
+    /// </summary>
     public partial class ReservationsView : UserControl
     {
         // Service (owns its own DbContext)
@@ -43,7 +46,6 @@ namespace DineConnect.App.Views
                 await LoadRestaurantsAsync();
                 await LoadReservationsAsync();
 
-                // Hook validation triggers AFTER data loaded
                 DatePicker.SelectedDateChanged += (_, __) => { if (_isLoaded) { PopulateTimeSlots(DatePicker.SelectedDate ?? DateTime.Today); ValidateForm(); } };
                 TimeCombo.SelectionChanged += (_, __) => { if (_isLoaded) ValidateForm(); };
                 RestaurantCombo.SelectionChanged += (_, __) => { if (_isLoaded) ValidateForm(); };

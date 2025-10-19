@@ -1,22 +1,25 @@
 ﻿using DineConnect.App.Data.Seeders;
 
+/// <summary>
+/// Provides database initialization and seeding for the DineConnect application.
+/// </summary>
 public static class DbSeed
 {
     public static async Task EnsureCreatedAndSeedAsync(DineConnectContext db)
     {
-        await db.Database.EnsureCreatedAsync();
+        _ = await db.Database.EnsureCreatedAsync();
 
-        var seeders = new List<ISeeder>
-        {
+        List<ISeeder> seeders =
+        [
             new UserSeeder(),
             new RestaurantSeeder(),
             new PostSeeder(),
             new CommentSeeder(),
             new ReservationSeeder(),
             new FavoriteSeeder()
-        };
+        ];
 
-        foreach (var seeder in seeders)
+        foreach (ISeeder seeder in seeders)
         {
             await seeder.SeedAsync(db);
         }

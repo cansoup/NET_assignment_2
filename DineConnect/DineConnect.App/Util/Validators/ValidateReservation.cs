@@ -1,9 +1,12 @@
 ﻿namespace DineConnect.App.Services.Validation
 {
+    /// <summary>
+    /// Provides validation logic for reservations, including restaurant, date/time, and party size checks.
+    /// </summary>
     public static class ValidateReservation
     {
         private const int MinPartySize = 1;
-        private const int MaxPartySize = 12; // matches your PartySlider
+        private const int MaxPartySize = 12;
 
         public static ValidationResult ValidateCreate(int? restaurantId, DateTime? at, int? partySize)
         {

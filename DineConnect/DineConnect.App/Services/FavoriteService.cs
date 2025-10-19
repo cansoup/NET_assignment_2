@@ -1,5 +1,4 @@
-﻿using DineConnect.App.Data;
-using DineConnect.App.Models;
+﻿using DineConnect.App.Models;
 using DineConnect.App.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -58,7 +57,7 @@ namespace DineConnect.App.Services
                     Name = f.Restaurant?.Name ?? "",
                     Address = f.Restaurant?.Address ?? "",
                     Lat = f.Restaurant?.Lat ?? 0,
-                    Lng = f.Restaurant?.Lng ?? 0,   
+                    Lng = f.Restaurant?.Lng ?? 0,
                 },
                 Rating = f.Rating
             };

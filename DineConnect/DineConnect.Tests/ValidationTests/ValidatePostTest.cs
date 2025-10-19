@@ -1,11 +1,13 @@
-﻿using NUnit.Framework;
-using DineConnect.App.Services.Validation;
+﻿using DineConnect.App.Services.Validation;
 
 namespace DineConnect.Tests.Validation
 {
     [TestFixture]
     public class ValidatePostTests
     {
+        /// <summary>
+        /// Ensures validation fails and returns errors when both title and content are null.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldReturnErrors_WhenTitleAndContentAreNull()
         {
@@ -16,6 +18,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Content is required."));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the title is shorter than the minimum allowed length.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldReturnError_WhenTitleIsTooShort()
         {
@@ -25,6 +30,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors[0], Does.Contain("Title must be"));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the title exceeds the maximum allowed length.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldReturnError_WhenTitleIsTooLong()
         {
@@ -35,6 +43,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors[0], Does.Contain("Title must be"));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the title is only whitespace.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldReturnError_WhenTitleIsOnlyWhitespace()
         {
@@ -44,6 +55,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors, Does.Contain("Title is required."));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the content is shorter than the minimum allowed length.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldReturnError_WhenContentIsTooShort()
         {
@@ -53,6 +67,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors[0], Does.Contain("Content must be"));
         }
 
+        /// <summary>
+        /// Ensures validation fails when the content exceeds the maximum allowed length.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldReturnError_WhenContentIsTooLong()
         {
@@ -63,6 +80,9 @@ namespace DineConnect.Tests.Validation
             Assert.That(result.Errors[0], Does.Contain("Content must be"));
         }
 
+        /// <summary>
+        /// Ensures validation passes when both title and content are valid.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldPass_WhenTitleAndContentAreValid()
         {
@@ -72,6 +92,9 @@ namespace DineConnect.Tests.Validation
             Assert.IsEmpty(result.Errors);
         }
 
+        /// <summary>
+        /// Ensures validation passes when both title and content are exactly at the minimum allowed length.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldPass_WhenTitleAndContentAreExactMinLength()
         {
@@ -81,6 +104,9 @@ namespace DineConnect.Tests.Validation
             Assert.IsEmpty(result.Errors);
         }
 
+        /// <summary>
+        /// Ensures validation passes when both title and content are exactly at the maximum allowed length.
+        /// </summary>
         [Test]
         public void ValidateCreateInput_ShouldPass_WhenTitleAndContentAreExactMaxLength()
         {

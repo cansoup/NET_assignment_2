@@ -1,6 +1,4 @@
-﻿using DineConnect.App.Services;
-using DineConnect.App.Services.Validation;
-using System.Linq;
+﻿using DineConnect.App.Services.Validation;
 using System.Windows;
 
 namespace DineConnect.App.Views.Auth

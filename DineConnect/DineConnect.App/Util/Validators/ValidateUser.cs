@@ -2,6 +2,9 @@
 
 namespace DineConnect.App.Services.Validation
 {
+    /// <summary>
+    /// Provides validation logic for user authentication and registration, including username and password checks.
+    /// </summary>
     public sealed class ValidateUser
     {
         private const int MinUsernameLength = 3;
@@ -15,7 +18,6 @@ namespace DineConnect.App.Services.Validation
             ValidateUsernameCommon(username, result);
             ValidatePasswordProvided(password, result);
 
-            // Hash check only if hash is provided (AuthService will pass it)
             if (!string.IsNullOrWhiteSpace(password) && !string.IsNullOrWhiteSpace(storedHash))
             {
                 bool verified = BCrypt.Net.BCrypt.Verify(password, storedHash);
@@ -53,7 +55,6 @@ namespace DineConnect.App.Services.Validation
             return result;
         }
 
-        // === Internal helpers ===
         private static void ValidateUsernameCommon(string? username, ValidationResult result)
         {
             if (string.IsNullOrWhiteSpace(username))

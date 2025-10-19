@@ -1,5 +1,4 @@
-﻿using DineConnect.App.Data;
-using DineConnect.App.Models;
+﻿using DineConnect.App.Models;
 using DineConnect.App.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -110,7 +109,6 @@ namespace DineConnect.App.Services
         public async Task<CreateReservationResult> CreateReservationAsync(
             int userId, int restaurantId, DateTime at, int partySize, CancellationToken ct = default)
         {
-            // Basic defensive checks / business rules could go here
             if (partySize < 1) return new(false, "Party size must be at least 1.", null);
 
             // Verify restaurant exists
@@ -152,7 +150,7 @@ namespace DineConnect.App.Services
             var entity = await _db.Reservations.FindAsync(new object?[] { reservationId }, ct);
             if (entity is null)
             {
-                return new(true, null); // already gone; treat as success for idempotency
+                return new(true, null);
             }
 
             if (entity.UserId != userId)

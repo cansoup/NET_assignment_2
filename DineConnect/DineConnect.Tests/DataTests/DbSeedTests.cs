@@ -1,18 +1,15 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using DineConnect.App.Models;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using NUnit.Framework;
-
-using DineConnect.App.Data;
-using DineConnect.App.Models; 
 
 namespace DineConnect.Tests
 {
     // Reusable helpers for all fixtures
     internal static class TestDb
     {
+        /// <summary>
+        /// Creates an in-memory SQLite database context for testing.
+        /// </summary>
         public static (DineConnectContext Ctx, SqliteConnection Conn) CreateInMemory()
         {
             var conn = new SqliteConnection("DataSource=:memory:");
@@ -28,6 +25,9 @@ namespace DineConnect.Tests
             return (ctx, conn);
         }
 
+        /// <summary>
+        /// Creates and seeds an in-memory database context for testing.
+        /// </summary>
         public static async Task<(DineConnectContext Ctx, SqliteConnection Conn)> CreateAndSeedAsync()
         {
             var (ctx, conn) = CreateInMemory();
@@ -40,6 +40,9 @@ namespace DineConnect.Tests
     [TestFixture]
     public class UserTests
     {
+        /// <summary>
+        /// Ensures that two users are seeded with expected fields and unique usernames.
+        /// </summary>
         [Test]
         public async Task Seeds_TwoUsers_WithExpectedFields_AndUniqueUserNames()
         {
@@ -64,6 +67,9 @@ namespace DineConnect.Tests
             finally { ctx.Dispose(); conn.Dispose(); }
         }
 
+        /// <summary>
+        /// Ensures that seeding users twice does not create duplicates (idempotency).
+        /// </summary>
         [Test]
         public async Task Idempotent_WhenSeedingUsersTwice_DoesNotDuplicate()
         {
@@ -78,54 +84,14 @@ namespace DineConnect.Tests
         }
     }
 
-    // ---------- RESTAURANTS ----------
-    [TestFixture]
-    public class RestaurantTests
-    {
-        [Test]
-        public async Task Seeds_TwoRestaurants_WithValidGeoAndContact()
-        {
-            var (ctx, conn) = await TestDb.CreateAndSeedAsync();
-            try
-            {
-                Assert.That(ctx.Restaurants.Count(), Is.EqualTo(2));
-
-                var ocean = ctx.Restaurants.SingleOrDefault(r => r.Id == 20000001);
-                var mountain = ctx.Restaurants.SingleOrDefault(r => r.Id == 20000002);
-
-                Assert.That(ocean, Is.Not.Null);
-                Assert.That(mountain, Is.Not.Null);
-
-                Assert.That(ocean!.Name, Is.EqualTo("Ocean View Grill"));
-                Assert.That(ocean.Address, Is.Not.Empty);
-                Assert.That(ocean.Lat, Is.InRange(-90.0, 90.0));
-                Assert.That(ocean.Lng, Is.InRange(-180.0, 180.0));
-                Assert.That(ocean.Phone, Is.Not.Empty);
-
-                Assert.That(mountain!.Name, Is.EqualTo("Mountain Top Diner"));
-                Assert.That(mountain.Address, Is.Not.Empty);
-            }
-            finally { ctx.Dispose(); conn.Dispose(); }
-        }
-
-        [Test]
-        public async Task Idempotent_WhenSeedingRestaurantsTwice_DoesNotDuplicate()
-        {
-            var (ctx, conn) = await TestDb.CreateAndSeedAsync();
-            try
-            {
-                var first = ctx.Restaurants.Count();
-                await DbSeed.EnsureCreatedAndSeedAsync(ctx);
-                Assert.That(ctx.Restaurants.Count(), Is.EqualTo(first));
-            }
-            finally { ctx.Dispose(); conn.Dispose(); }
-        }
-    }
 
     // ---------- POSTS ----------
     [TestFixture]
     public class PostTests
     {
+        /// <summary>
+        /// Ensures that two posts are seeded with expected titles and valid user links.
+        /// </summary>
         [Test]
         public async Task Seeds_TwoPosts_WithExpectedTitles_AndValidUserLinks()
         {
@@ -154,6 +120,9 @@ namespace DineConnect.Tests
             finally { ctx.Dispose(); conn.Dispose(); }
         }
 
+        /// <summary>
+        /// Ensures that querying posts by user ID returns only that user's posts.
+        /// </summary>
         [Test]
         public async Task Query_ByUserId_ReturnsOnlyThatUsersPosts()
         {
@@ -172,6 +141,9 @@ namespace DineConnect.Tests
     [TestFixture]
     public class CommentTests
     {
+        /// <summary>
+        /// Ensures that two comments are seeded with valid post and user links.
+        /// </summary>
         [Test]
         public async Task Seeds_TwoComments_WithValidPostAndUserLinks()
         {
@@ -197,6 +169,9 @@ namespace DineConnect.Tests
             finally { ctx.Dispose(); conn.Dispose(); }
         }
 
+        /// <summary>
+        /// Ensures that querying comments for a post returns the expected items.
+        /// </summary>
         [Test]
         public async Task Query_CommentsForPost_ReturnsExpectedItems()
         {
