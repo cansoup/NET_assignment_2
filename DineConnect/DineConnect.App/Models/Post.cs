@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace DineConnect.App.Models
 {
+    /// <summary>
+    /// Represents a post in the community feed, created by a user.
+    /// </summary>
     public class Post
     {
         public int Id { get; set; }

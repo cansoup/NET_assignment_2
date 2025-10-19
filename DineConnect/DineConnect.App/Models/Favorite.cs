@@ -1,5 +1,8 @@
 ﻿namespace DineConnect.App.Models
 {
+    /// <summary>
+    /// Represents a user's favorite restaurant entry, including rating and navigation properties.
+    /// </summary>
     public class Favorite
     {
         public int Id { get; set; }

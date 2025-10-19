@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace DineConnect.App.Models
 {
+    /// <summary>
+    /// Represents a user of the DineConnect application.
+    /// </summary>
     public class User
     {
         public int Id { get; set; }
@@ -13,7 +16,7 @@ namespace DineConnect.App.Models
         public string PasswordHash { get; set; }
 
         // This collection links a user to their favorite entries
-        public virtual ICollection<Favorite> Favorites { get; set; } = new HashSet<Favorite>(); 
+        public virtual ICollection<Favorite> Favorites { get; set; } = new HashSet<Favorite>();
 
     }
 }

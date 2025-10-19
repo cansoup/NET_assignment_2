@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace DineConnect.App.Models
 {
+    /// <summary>
+    /// Represents a comment made by a user on a post in the community feed.
+    /// </summary>
     public class Comment
     {
         public int Id { get; set; }

@@ -2,6 +2,9 @@
 
 namespace DineConnect.App.Models
 {
+    /// <summary>
+    /// Represents a restaurant, including its location, contact information, and related reservations and favorites.
+    /// </summary>
     public class Restaurant
     {
         public int Id { get; set; }
@@ -11,11 +14,6 @@ namespace DineConnect.App.Models
         public double Lng { get; set; }
         public string? Phone { get; set; }
 
-        public override string ToString() => Name;
-
-        // Navigation
-        public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
-       // naviation property
         public virtual ICollection<Favorite> FavoriteByUsers { get; set; } = new HashSet<Favorite>();
     }
 }

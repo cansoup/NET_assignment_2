@@ -3,8 +3,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DineConnect.App.Models
 {
+    /// <summary>
+    /// Specifies the lifecycle states a reservation can be in.
+    /// </summary>
     public enum ReservationStatus { Pending, Confirmed, Cancelled }
 
+    /// <summary>
+    /// Represents a reservation made by a user at a restaurant, including date, party size, and status.
+    /// </summary>
     public class Reservation
     {
         public int Id { get; set; }
@@ -13,9 +19,6 @@ namespace DineConnect.App.Models
         public DateTime At { get; set; }
         public int PartySize { get; set; }
         public ReservationStatus Status { get; set; } = ReservationStatus.Confirmed;
-
-        // Navigation — Name will be accessible via Restaurant.Name
-        public Restaurant Restaurant { get; set; } = null!;
     }
 
 }
