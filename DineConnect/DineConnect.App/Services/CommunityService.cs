@@ -1,5 +1,4 @@
-﻿using DineConnect.App.Data;
-using DineConnect.App.Models;
+﻿using DineConnect.App.Models;
 using DineConnect.App.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 

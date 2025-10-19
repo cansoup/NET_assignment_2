@@ -1,12 +1,6 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using DineConnect.App.Models;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using NUnit.Framework;
-
-using DineConnect.App.Data;
-using DineConnect.App.Models;
 
 namespace DineConnect.Tests
 {

@@ -1,8 +1,7 @@
-﻿using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using DineConnect.App.Data.Seeders;
 using DineConnect.App.Models;
-using DineConnect.App.Data.Seeders;
 using DineConnect.App.Util;
+using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Seeds initial restaurant data into the database if no restaurants exist.

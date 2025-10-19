@@ -1,6 +1,4 @@
 ﻿using DineConnect.App.Util;
-using System;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DineConnect.App.Models
 {

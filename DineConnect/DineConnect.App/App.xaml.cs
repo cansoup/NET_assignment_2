@@ -1,6 +1,4 @@
-﻿﻿using DineConnect.App.Data;
-using DineConnect.App.Views.Auth;
-using System.Linq;
+﻿using DineConnect.App.Views.Auth;
 using System.Windows;
 using System.Windows.Threading;
 

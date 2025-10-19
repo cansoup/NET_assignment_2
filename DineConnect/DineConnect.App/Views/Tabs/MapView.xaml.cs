@@ -1,13 +1,11 @@
 ﻿using DineConnect.App.Services;
 using GMap.NET;
 using GMap.NET.MapProviders;
-using GMap.NET.WindowsPresentation;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using GMap.NET.WindowsForms;
 
 namespace DineConnect.App.Views.Tabs
 {

@@ -1,5 +1,4 @@
-﻿using NUnit.Framework;
-using DineConnect.App.Services.Validation;
+﻿using DineConnect.App.Services.Validation;
 
 namespace DineConnect.Tests.Validation
 {

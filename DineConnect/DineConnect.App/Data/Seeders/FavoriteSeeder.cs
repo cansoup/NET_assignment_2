@@ -1,7 +1,6 @@
-﻿using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using DineConnect.App.Data.Seeders;
 using DineConnect.App.Models;
-using DineConnect.App.Data.Seeders;
+using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Seeds initial favorite data into the database if no favorites exist.

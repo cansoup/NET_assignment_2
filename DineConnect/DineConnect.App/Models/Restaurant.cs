@@ -1,5 +1,4 @@
 ﻿using DineConnect.App.Util;
-using System.Collections.Generic;
 
 namespace DineConnect.App.Models
 {
