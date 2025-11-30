@@ -23,7 +23,7 @@ namespace DineConnect.App.Services
 
         public async Task<IEnumerable<Prediction>> GetAutocompleteSuggestionAsync(string input)
         {
-            if (string.IsNullOrWhiteSpace(input) || string.IsNullOrEmpty(ApiKey) || ApiKey == "AIzaSyBwKOrbPdEu5GxuFoj_P4TTUWXUvt4cPAk")
+            if (string.IsNullOrWhiteSpace(input) || string.IsNullOrEmpty(ApiKey) || ApiKey == "")
             {
                 return Enumerable.Empty<Prediction>();
             }
