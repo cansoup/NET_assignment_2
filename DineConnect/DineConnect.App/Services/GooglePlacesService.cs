@@ -18,7 +18,7 @@ namespace DineConnect.App.Services
 
     public class GooglePlacesService
     {
-        private const string ApiKey = "AIzaSyBwKOrbPdEu5GxuFoj_P4TTUWXUvt4cPAk";
+        private const string ApiKey = "";
         private static readonly HttpClient _httpClient = new HttpClient();
 
         public async Task<IEnumerable<Prediction>> GetAutocompleteSuggestionAsync(string input)
